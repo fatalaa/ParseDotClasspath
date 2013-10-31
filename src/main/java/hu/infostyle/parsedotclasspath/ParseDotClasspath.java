@@ -122,6 +122,7 @@ public class ParseDotClasspath {
                         path = "${"+path.substring(1)+".classpath}";
                         builder.add(path);
                     } else if(kind.equals("src") && path.equals("src") ) {
+                        //Do nothing
 
                     } else {
                         builder.add(absolutize(baseDir, path));
