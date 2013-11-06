@@ -76,6 +76,7 @@ public class ParseDotClasspath {
         } else {
             for (int i = 0; i < a.size(); i++) {
                 File dotCp = new File((String) a.get(i));
+                StringBuilder stringBuilder = new StringBuilder();
                 if (dotCp.isDirectory()) {
                     // if directory, append the default name
                     dotCp = new File(dotCp, ".classpath");
@@ -83,10 +84,9 @@ public class ParseDotClasspath {
                 ClasspathBuilder builder = new ClasspathBuilder();
 
                 parseDotClasspath(dotCp, builder);
-                System.out.print("-------------------------------------------------\n");
-                // print the result
-                System.out.println(dotCp.getParentFile().getName() + ".classpath="+ builder.getResult());
+                stringBuilder.append(dotCp.getParentFile().getName() + ".classpath=" + builder.getResult() + System.getProperty("line.separator"));
             }
+
         }
 
 

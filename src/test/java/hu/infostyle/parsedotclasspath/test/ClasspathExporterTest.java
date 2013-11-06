@@ -4,10 +4,6 @@ import hu.infostyle.parsedotclasspath.ClasspathExporter;
 import hu.infostyle.parsedotclasspath.util.ClasspathUtil;
 import junit.framework.TestCase;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-
-
 public class ClasspathExporterTest extends TestCase{
 
     public void testExport() {
