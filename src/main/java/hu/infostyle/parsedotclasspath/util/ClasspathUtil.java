@@ -1,5 +1,7 @@
 package hu.infostyle.parsedotclasspath.util;
 
+import java.util.HashMap;
+
 public class ClasspathUtil {
     public static final String ORG_ECLIPSE_JDT_CORE_PREFS_DIR = ".metadata/.plugins/org.eclipse.core.runtime/.settings";
     public static final String ORG_ECLIPSE_JDT_CORE_PREFS_FILE = "org.eclipse.jdt.core.prefs";
@@ -15,4 +17,14 @@ public class ClasspathUtil {
     public static final String GWT = "GWT";
     public static final String SMARTGTW = "SMARTGWT";
 
+    public static final String PROPERTY_FILE_NAME = "gen_global.properties";
+
+    public static HashMap<String,String> valueOf(String classpathAsString) {
+        HashMap<String, String> variables = new HashMap<String, String>();
+        String[] strings = classpathAsString.split("=");
+        for (int i = 0, j = 1; j <= strings.length - 1; i++, j++) {
+            variables.put(strings[i], strings[j]);
+        }
+        return variables;
+    }
 }
