@@ -78,7 +78,7 @@ public class ParseDotClasspath {
             ClasspathExporter classpathExporter = new ClasspathExporter();
             for (int i = 0; i < a.size(); i++) {
                 File dotCp = new File((String) a.get(i));
-                StringBuffer stringBuilder = new StringBuffer();
+                StringBuffer stringBuffer = new StringBuffer();
                 if (dotCp.isDirectory()) {
                     // if directory, append the default name
                     dotCp = new File(dotCp, ".classpath");
@@ -86,10 +86,10 @@ public class ParseDotClasspath {
                 ClasspathBuilder builder = new ClasspathBuilder();
 
                 parseDotClasspath(dotCp, builder);
-                stringBuilder.append(dotCp.getParentFile().getName() + ".classpath=" + builder.getResult());
+                stringBuffer.append(dotCp.getParentFile().getName() + ".classpath=" + builder.getResult());
                 classpathExporter.addPath((String)a.get(i));
-                classpathExporter.addClasspath(ClasspathUtil.valueOf(stringBuilder.toString()));
-                stringBuilder.setLength(0);
+                classpathExporter.addClasspath(ClasspathUtil.valueOf(stringBuffer.toString()));
+                stringBuffer.setLength(0);
             }
             classpathExporter.export(environmentVariables);
         }
