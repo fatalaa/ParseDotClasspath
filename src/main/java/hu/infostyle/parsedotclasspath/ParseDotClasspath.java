@@ -93,8 +93,6 @@ public class ParseDotClasspath {
             }
             classpathExporter.export(environmentVariables);
         }
-
-
         System.exit(0);
     }
 
@@ -151,9 +149,5 @@ public class ParseDotClasspath {
             return child;
         else
             return new File(base, path);
-    }
-
-    public static boolean generateCpPropertyFile(String classpathToWrite) {
-        return false;
     }
 }
