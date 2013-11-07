@@ -1,5 +1,6 @@
 package hu.infostyle.parsedotclasspath;
 
+import hu.infostyle.parsedotclasspath.util.ClasspathUtil;
 import hu.infostyle.parsedotclasspath.util.EnvironmentVariables;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -74,9 +75,10 @@ public class ParseDotClasspath {
 
             parseDotClasspath(new File("./.classpath"), builder);
         } else {
+            ClasspathExporter classpathExporter = new ClasspathExporter();
             for (int i = 0; i < a.size(); i++) {
                 File dotCp = new File((String) a.get(i));
-                StringBuilder stringBuilder = new StringBuilder();
+                StringBuffer stringBuilder = new StringBuffer();
                 if (dotCp.isDirectory()) {
                     // if directory, append the default name
                     dotCp = new File(dotCp, ".classpath");
@@ -84,9 +86,12 @@ public class ParseDotClasspath {
                 ClasspathBuilder builder = new ClasspathBuilder();
 
                 parseDotClasspath(dotCp, builder);
-                stringBuilder.append(dotCp.getParentFile().getName() + ".classpath=" + builder.getResult() + System.getProperty("line.separator"));
+                stringBuilder.append(dotCp.getParentFile().getName() + ".classpath=" + builder.getResult());
+                classpathExporter.addPath((String)a.get(i));
+                classpathExporter.addClasspath(ClasspathUtil.valueOf(stringBuilder.toString()));
+                stringBuilder.setLength(0);
             }
-
+            classpathExporter.export(environmentVariables);
         }
 
 
@@ -127,8 +132,6 @@ public class ParseDotClasspath {
                     } else {
                         builder.add(absolutize(baseDir, path));
                     }
-
-
                 }
 
                 String output = atts.getValue("output");
