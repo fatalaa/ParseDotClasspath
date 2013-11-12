@@ -3,6 +3,7 @@ package hu.infostyle.parsedotclasspath;
 import hu.infostyle.parsedotclasspath.eclipseutils.ClasspathUtil;
 import hu.infostyle.parsedotclasspath.eclipseutils.EnvironmentVariables;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,19 +40,17 @@ public class ClasspathExporter {
 
 	public void export(EnvironmentVariables environmentVariables) {
 		FileWriter fileWriter = null;
+        String workspaceDirectory = new File(projectPaths.get(0)).getParentFile().getAbsolutePath();
+        File outputFile = new File(workspaceDirectory, ClasspathUtil.PROPERTY_FILE_NAME);
 		try {
-			fileWriter = new FileWriter(ClasspathUtil.PROPERTY_FILE_NAME);
+			fileWriter = new FileWriter(outputFile);
 			
 			HashMap<String, String> ev = environmentVariables.getEnvironmentVariables();
 			for (String key : ev.keySet()) {
 				fileWriter.append(key).append("=").append(ev.get(key)).append(System.getProperty("line.separator"));
 			}
 			
-			fileWriter.append(System.getProperty("line.separator"));
-			
-			for (String key : projectPaths) {
-				fileWriter.append(key).append(System.getProperty("line.separator"));
-			}
+			fileWriter.append(ClasspathUtil.COMMENT_LINE);
 			
 			for (HashMap<String, String> classpath : classpaths) {
 				for (String key : classpath.keySet()) {

@@ -18,7 +18,8 @@ public class ClasspathUtil {
     public static final String SMARTGTW = "SMARTGWT";
 
     public static final String PROPERTY_FILE_NAME = "gen_global.properties";
-    public static final String COMMENT_LINE = "##################################################";
+    public static final String COMMENT_LINE = new StringBuilder("##################################################")
+                                                            .append(System.getProperty("line.separator")).toString();
 
     public static HashMap<String,String> valueOf(String classpathAsString) {
         HashMap<String, String> variables = new HashMap<String, String>();

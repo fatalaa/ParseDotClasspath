@@ -25,4 +25,18 @@ public class AntUtils {
     public static final String BUILD_TARGET_NAME_CLEAN = "clean";
     public static final String BUILD_DELETE_ELEMENT = "delete";
     public static final String BUILD_DELETE_DIR_ATTR = "dir";
+    public static final String BUILD_CLEANALL_DEPENDS_ATTR = "depends";
+    public static final String BUILD_TARGET_NAME_CLEANALL = "cleanall";
+    public static final String BUILD_TARGET_NAME_BUILD = "build";
+    public static final String BUILD_TARGET_NAME_BUILDPROJECT = "build-project";
+    public static final String BUILD_TARGET_NAME_BUILDSUBPROJECTS = "build-subprojects";
+    public static final String BUILD_ECHO_ELEMENT = "echo";
+    public static final String BUILD_ECHO_MESSAGE_ATTR = "message";
+    public static final String BUILD_JAVAC_ELEMENT = "javac";
+    public static final String BUILD_JAVAC_DEBUG_ATTR = "debug";
+    public static final String BUILD_JAVAC_DEBUGLEVEL_ATTR = "debuglevel";
+    public static final String BUILD_JAVAC_DESTDIR_ATTR = "destdir";
+    public static final String BUILD_JAVAC_SOURCE_ATTR = "source";
+    public static final String BUILD_JAVAC_TARGET_ATTR = "target";
+    public static final String BUILD_JAVAC_ENCODING_ATTR = "encoding";
 }
