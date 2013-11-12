@@ -1,8 +1,10 @@
 package hu.infostyle.parsedotclasspath;
 
+import hu.infostyle.parsedotclasspath.eclipseutils.ClasspathUtil;
 import hu.infostyle.parsedotclasspath.eclipseutils.EnvironmentVariables;
 
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,7 +17,7 @@ public class ClasspathExporter {
         return projectPaths;
     }
 
-    public void setPaths(List<String> paths) {
+    public void setProjectPaths(List<String> paths) {
         this.projectPaths = paths;
     }
 
@@ -35,32 +37,39 @@ public class ClasspathExporter {
 		classpaths.add(classpath);
 	}
 
-	public void export(EnvironmentVariables environmentVariables) throws Exception{
-		FileWriter fw = null;
+	public void export(EnvironmentVariables environmentVariables) {
+		FileWriter fileWriter = null;
 		try {
-			fw = new FileWriter("out.properties");
+			fileWriter = new FileWriter(ClasspathUtil.PROPERTY_FILE_NAME);
 			
 			HashMap<String, String> ev = environmentVariables.getEnvironmentVariables();
 			for (String key : ev.keySet()) {
-				fw.append(key).append("=").append(ev.get(key)).append("\r\n");
+				fileWriter.append(key).append("=").append(ev.get(key)).append(System.getProperty("line.separator"));
 			}
 			
-			fw.append("\r\n");
+			fileWriter.append(System.getProperty("line.separator"));
 			
 			for (String key : projectPaths) {
-				fw.append(key).append("\r\n");
+				fileWriter.append(key).append(System.getProperty("line.separator"));
 			}
 			
-			for (HashMap<String, String> p : classpaths) {
-				for (String key : p.keySet()) {
-					fw.append(key).append("=").append(p.get(key)).append("\r\n");
+			for (HashMap<String, String> classpath : classpaths) {
+				for (String key : classpath.keySet()) {
+					fileWriter.append(key).append("=").append(classpath.get(key)).append(System.getProperty("line.separator"));
 				}
 			}
-			
-		} finally {
-			if (fw != null) {
-				fw.close();
-			}
+		} catch (Exception exception) {
+            exception.printStackTrace();
+            throw new RuntimeException("Exporting to property file failed");
+        }
+        finally {
+			if (fileWriter != null) {
+                try {
+                    fileWriter.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
 		}
 	}
 }
