@@ -1,4 +1,4 @@
-package hu.infostyle.parsedotclasspath.util;
+package hu.infostyle.parsedotclasspath.eclipseutils;
 
 import java.util.HashMap;
 

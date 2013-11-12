@@ -1,7 +1,7 @@
 package hu.infostyle.parsedotclasspath;
 
-import hu.infostyle.parsedotclasspath.util.ClasspathUtil;
-import hu.infostyle.parsedotclasspath.util.EnvironmentVariables;
+import hu.infostyle.parsedotclasspath.eclipseutils.ClasspathUtil;
+import hu.infostyle.parsedotclasspath.eclipseutils.EnvironmentVariables;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;

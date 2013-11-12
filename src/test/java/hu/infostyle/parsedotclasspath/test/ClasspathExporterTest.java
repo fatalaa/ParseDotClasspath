@@ -1,7 +1,7 @@
 package hu.infostyle.parsedotclasspath.test;
 
 import hu.infostyle.parsedotclasspath.ClasspathExporter;
-import hu.infostyle.parsedotclasspath.util.ClasspathUtil;
+import hu.infostyle.parsedotclasspath.eclipseutils.ClasspathUtil;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
