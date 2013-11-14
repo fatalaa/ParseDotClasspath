@@ -6,6 +6,15 @@ public class AntUtils {
     public static final String BUILD_PROJECT_DEF_ATTR = "default";
     public static final String BUILD_PROJECT_BASEDIR_ATTR = "basedir";
     public static final String BUILD_PROPERTY_ELEMENT = "property";
+    public static final String BUILD_PROPERTY_VALUE_ATTR = "value";
+    public static final String BUILD_PROPERTY_DEBUGLEVEL = "debuglevel";
+    public static final String BUILD_PROPERTY_DEBUGLEVEL_VALUE = "source,lines,vars";
+    public static final String BUILD_PROPERTY_TARGET = "target";
+    public static final String BUILD_PROPERTY_VALUE_CODETARGET = "1.6";
+    public static final String BUILD_PROPERTY_SOURCE = "source";
+    public static final String BUILD_PROPERTY_SOURCE_VALUE = "1.6";
+    public static final String BUILD_PROPERTY_ENCODING = "encoding";
+    public static final String BUILD_PROPERTY_ENCODING_TYPE = "UTF-8";
     public static final String BUILD_PATH_ELEMENT = "path";
     public static final String BUILD_PATH_ID_ATTR = "id";
     public static final String BUILD_PATHELEMENT = "pathelement";
