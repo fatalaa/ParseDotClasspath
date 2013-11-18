@@ -1,6 +1,16 @@
 package hu.infostyle.parsedotclasspath.eclipseutils;
 
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
+
+import javax.xml.parsers.SAXParserFactory;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class ClasspathUtil {
     public static final String ORG_ECLIPSE_JDT_CORE_PREFS_DIR = ".metadata/.plugins/org.eclipse.core.runtime/.settings";
@@ -28,5 +38,41 @@ public class ClasspathUtil {
             variables.put(strings[i], strings[j]);
         }
         return variables;
+    }
+
+    public static EclipseProjectType getProjectType(String projectPath) {
+        File classpathFile = new File(projectPath);
+        SAXBuilder saxBuilder = new SAXBuilder();
+        try {
+            Document document = saxBuilder.build(classpathFile);
+            Element natures = document.getRootElement();
+            if (natures != null) {
+                for(Element nature : natures.getChildren()) {
+                    String natureKind = nature.getValue();
+                    if (natureKind.equals("com.android.ide.eclipse.adt.AndroidNature"))
+                        return EclipseProjectType.ANDROID;
+                    else if (natureKind.equals("com.google.gwt.eclipse.core.gwtNature"))
+                        return EclipseProjectType.GWT;
+                }
+                return EclipseProjectType.EJB;
+            }
+        } catch (JDOMException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Cannot get project kind");
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Cannot get project kind");
+        } finally {
+            return EclipseProjectType.UNKNOWN;
+        }
+    }
+
+    private static Element getNaturesElement(Element rootElement) {
+        List<Element> children = rootElement.getChildren();
+        for(Element child : children) {
+            if (child.getName().equals("natures"))
+                return child;
+        }
+        return null;
     }
 }

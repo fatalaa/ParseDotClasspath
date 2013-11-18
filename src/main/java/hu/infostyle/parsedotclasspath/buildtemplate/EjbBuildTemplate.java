@@ -4,6 +4,7 @@ import hu.infostyle.parsedotclasspath.antutils.AntExportable;
 import hu.infostyle.parsedotclasspath.antutils.AntPropertyType;
 import hu.infostyle.parsedotclasspath.antutils.AntUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.output.Format;
@@ -12,12 +13,15 @@ import org.jdom2.output.XMLOutputter;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.HashMap;
 import java.util.List;
 
 public class EjbBuildTemplate implements AntExportable {
     protected String filePathAndName;
     protected File outputFile;
     protected Document buildFileContent;
+    protected HashMap<String, Object> classpathVarMap;
+
 
     public String getFilePathAndName() {
         return filePathAndName;
@@ -41,6 +45,14 @@ public class EjbBuildTemplate implements AntExportable {
 
     public void setBuildFileContent(Document buildFileContent) {
         this.buildFileContent = buildFileContent;
+    }
+
+    public HashMap<String, Object> getClasspathVarMap() {
+        return classpathVarMap;
+    }
+
+    public void setClasspathVarMap(HashMap<String, Object> classpathVarMap) {
+        this.classpathVarMap = classpathVarMap;
     }
 
     public EjbBuildTemplate(String outputFilenameWithPath) {

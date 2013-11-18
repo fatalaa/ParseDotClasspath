@@ -103,6 +103,7 @@ public class ParseDotClasspath {
     public static void parseDotClasspath(File dotClasspath, final ClasspathBuilder builder) throws IOException, SAXException, ParserConfigurationException {
         // all entries in .classpath are relative to this directory.
         final File baseDir = dotClasspath.getParentFile().getAbsoluteFile();
+        HashMap<String, Object> classpathCopyMap = new HashMap<String, Object>();
 
 //        XMLReader parser = XMLReaderFactory.createXMLReader();
         SAXParserFactory spf = SAXParserFactory.newInstance();
@@ -126,6 +127,8 @@ public class ParseDotClasspath {
                         builder.add(path);
                     } else if(kind.equals("src") && path.equals("src") ) {
                         //Do nothing
+
+                    } else if(kind.equals("lib") && kind.endsWith("xml")) {
 
                     } else {
                         builder.add(absolutize(baseDir, path));
