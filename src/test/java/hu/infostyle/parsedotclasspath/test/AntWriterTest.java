@@ -3,7 +3,7 @@ package hu.infostyle.parsedotclasspath.test;
 import hu.infostyle.parsedotclasspath.antutils.AntBuildWriter;
 import hu.infostyle.parsedotclasspath.antutils.AntPropertyType;
 import hu.infostyle.parsedotclasspath.antutils.AntUtils;
-import hu.infostyle.parsedotclasspath.antutils.EjbBuildTemplate;
+import hu.infostyle.parsedotclasspath.buildtemplate.EjbBuildTemplate;
 import hu.infostyle.parsedotclasspath.eclipseutils.ClasspathUtil;
 import junit.framework.TestCase;
 

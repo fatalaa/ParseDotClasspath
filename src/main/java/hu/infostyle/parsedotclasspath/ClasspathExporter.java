@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+
+//This class exports information to a global proprty file
 public class ClasspathExporter {
 	private List<String> projectPaths = new ArrayList<String>();
 	private List<HashMap<String, String>> classpaths = new ArrayList<HashMap<String, String>>();

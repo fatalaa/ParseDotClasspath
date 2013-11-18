@@ -1,5 +1,8 @@
-package hu.infostyle.parsedotclasspath.antutils;
+package hu.infostyle.parsedotclasspath.buildtemplate;
 
+import hu.infostyle.parsedotclasspath.antutils.AntExportable;
+import hu.infostyle.parsedotclasspath.antutils.AntPropertyType;
+import hu.infostyle.parsedotclasspath.antutils.AntUtils;
 import org.apache.commons.io.FileUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -12,9 +15,9 @@ import java.io.StringWriter;
 import java.util.List;
 
 public class EjbBuildTemplate implements AntExportable {
-    private String filePathAndName;
-    private File outputFile;
-    private Document buildFileContent;
+    protected String filePathAndName;
+    protected File outputFile;
+    protected Document buildFileContent;
 
     public String getFilePathAndName() {
         return filePathAndName;
@@ -139,14 +142,14 @@ public class EjbBuildTemplate implements AntExportable {
 
     public void addCleanAllTarget() {
         Element target = new Element(AntUtils.BUILD_TARGET_ELEMENT);
-        target.setAttribute(AntUtils.BUILD_CLEANALL_DEPENDS_ATTR, AntUtils.BUILD_TARGET_NAME_CLEAN);
+        target.setAttribute(AntUtils.BUILD_TARGET_DEPENDS_ATTR, AntUtils.BUILD_TARGET_NAME_CLEAN);
         target.setAttribute(AntUtils.BUILD_TARGET_NAME_ATTR, AntUtils.BUILD_TARGET_NAME_CLEANALL);
         this.appendContentToBuildFile(buildFileContent, target);
     }
 
     public void addBuildProjectTarget(boolean debug, String destDir, String sourceDir, String classPath) {
         Element target = new Element(AntUtils.BUILD_TARGET_ELEMENT);
-        target.setAttribute(AntUtils.BUILD_CLEANALL_DEPENDS_ATTR, AntUtils.BUILD_TARGET_NAME_INIT);
+        target.setAttribute(AntUtils.BUILD_TARGET_DEPENDS_ATTR, AntUtils.BUILD_TARGET_NAME_INIT);
         target.setAttribute(AntUtils.BUILD_TARGET_NAME_ATTR, AntUtils.BUILD_TARGET_NAME_BUILDPROJECT);
         Element echo = new Element(AntUtils.BUILD_ECHO_ELEMENT);
         echo.setAttribute(AntUtils.BUILD_ECHO_MESSAGE_ATTR, AntUtils.BUILD_ECHO_MESSAGE_VALUE);
@@ -164,7 +167,7 @@ public class EjbBuildTemplate implements AntExportable {
         this.appendContentToBuildFile(buildFileContent, target);
     }
 
-    private void appendContentToBuildFile(Document buildFile, Element contentToAppend) {
+    protected void appendContentToBuildFile(Document buildFile, Element contentToAppend) {
         if (buildFile != null && contentToAppend != null)
             buildFile.getRootElement().addContent(contentToAppend);
         else
