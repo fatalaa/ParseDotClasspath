@@ -44,6 +44,7 @@ public class ClasspathExporter {
 		FileWriter fileWriter = null;
         String workspaceDirectory = new File(projectPaths.get(0)).getParentFile().getAbsolutePath();
         File outputFile = new File(workspaceDirectory, ClasspathUtil.PROPERTY_FILE_NAME);
+        //outputFile = new File(ClasspathUtil.PROPERTY_FILE_NAME);
 		try {
 			fileWriter = new FileWriter(outputFile);
 			
@@ -56,7 +57,7 @@ public class ClasspathExporter {
 			
 			for (HashMap<String, String> classpath : classpaths) {
 				for (String key : classpath.keySet()) {
-					fileWriter.append(key).append("=").append(classpath.get(key)).append(System.getProperty("line.separator"));
+					fileWriter.append(key).append("=").append(classpath.get(key).replace("\\", "\\\\")).append(System.getProperty("line.separator"));
 				}
 			}
 		} catch (Exception exception) {

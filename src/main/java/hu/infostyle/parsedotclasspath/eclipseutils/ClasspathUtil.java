@@ -27,7 +27,7 @@ public class ClasspathUtil {
     public static final String GWT = "GWT";
     public static final String SMARTGTW = "SMARTGWT";
 
-    public static final String PROPERTY_FILE_NAME = "gen_global.properties";
+    public static final String PROPERTY_FILE_NAME = "gen_global.properties"; // "D:\\work\\base\\dev\\gen_global.properties"
     public static final String COMMENT_LINE = new StringBuilder("##################################################")
                                                             .append(System.getProperty("line.separator")).toString();
 

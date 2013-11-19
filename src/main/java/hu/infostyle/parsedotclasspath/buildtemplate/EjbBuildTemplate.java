@@ -4,7 +4,6 @@ import hu.infostyle.parsedotclasspath.antutils.AntExportable;
 import hu.infostyle.parsedotclasspath.antutils.AntPropertyType;
 import hu.infostyle.parsedotclasspath.antutils.AntUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.output.Format;
