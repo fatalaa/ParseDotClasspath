@@ -129,7 +129,8 @@ public class ParseDotClasspath {
                         //Do nothing
 
                     } else if(kind.equals("lib") && kind.endsWith("xml")) {
-
+                        //TODO
+                        //Handle GWT datasource xml files
                     } else {
                         builder.add(absolutize(baseDir, path));
                     }
