@@ -1,20 +1,24 @@
 package hu.infostyle.parsedotclasspath.buildtemplate;
 
+import hu.infostyle.parsedotclasspath.antutils.AntExportable;
+import hu.infostyle.parsedotclasspath.antutils.AntPropertyType;
+import hu.infostyle.parsedotclasspath.eclipseutils.ClasspathUtil;
 import hu.infostyle.parsedotclasspath.eclipseutils.EnvironmentVariables;
+import org.apache.commons.io.FileUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
 
-public class AndroidLibraryBuildTemplate {
+public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExportable {
     private static String androidHome;
     private String projectHome;
 
@@ -26,7 +30,8 @@ public class AndroidLibraryBuildTemplate {
         this.projectHome = projectHome;
     }
 
-    public AndroidLibraryBuildTemplate(EnvironmentVariables environmentVariables) {
+    public AndroidLibraryBuildTemplate(EnvironmentVariables environmentVariables, String outputFileWithPath) {
+        super(outputFileWithPath);
         if (environmentVariables != null) {
             androidHome = environmentVariables.getVariableByKey("ANDROID_HOME");
             return;
@@ -52,21 +57,33 @@ public class AndroidLibraryBuildTemplate {
         }
     }
 
+    @Override
+    public void export() {
 
-
-    /*private Document openProjectBuildXml() {
-        SAXBuilder saxBuilder = new SAXBuilder();
-        File buildFile = new File(projectHome + File.separator + "build.xml");
-        try {
-            Document project = saxBuilder.build(buildFile);
-            Element rootElement = project.getRootElement();
-
-        } catch (JDOMException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (executeUpdateOnProject()) {
+            List<String> dependencies = getDependencyProjects();
+            if (dependencies.size() > 0)
+                this.addSpecificationToProject();
+            StringWriter stringWriter = new StringWriter();
+            XMLOutputter xmlOutputter = new XMLOutputter(Format.getPrettyFormat());
+            try {
+                xmlOutputter.output(buildFileContent, stringWriter);
+                if (outputFile.exists()) {
+                    if (outputFile.delete()) {
+                        System.out.println(outputFile.getAbsoluteFile().getName() + " deleted");
+                    }
+                    else {
+                        System.out.println(outputFile.getAbsoluteFile().getName() + " not deleted");
+                    }
+                }
+                FileUtils.writeStringToFile(outputFile, stringWriter.toString(), true);
+            } catch (IOException exception) {
+                exception.printStackTrace();
+                throw new RuntimeException("Cannot export project");
+            }
         }
-    }*/
+        throw new RuntimeException("Cannot export project");
+    }
 
     private Properties openProjectPropertyFile() {
         Properties properties = new Properties();
@@ -79,7 +96,7 @@ public class AndroidLibraryBuildTemplate {
         }
     }
 
-    private List<String> getDependecyProjects() {
+    private List<String> getDependencyProjects() {
         Properties properties = openProjectPropertyFile();
         Enumeration keys = properties.keys();
         List<String> references = new ArrayList<String>();
@@ -89,5 +106,21 @@ public class AndroidLibraryBuildTemplate {
                 references.add(properties.getProperty(key));
         }
         return references;
+    }
+
+    private void addSpecificationToProject() {
+        Element rootElement = buildFileContent.getRootElement();
+        Element globalPropertyElement = new Element("property").setAttribute("file", "../gen_global.properties");
+        int idx = 0;
+        for (int i = 0 ; i < buildFileContent.getRootElement().getChildren().size(); i++) {
+            if (rootElement.getChildren().get(i).getAttributeValue("file").equals("local.properties")) {
+                rootElement.getChildren().add(i + 1, globalPropertyElement);
+                idx = i + 1;
+                break;
+            }
+        }
+        Element javaCompilerProperty = new Element("property").setAttribute("name", "java.compiler.classpath")
+                .setAttribute("value", "${" + projectHome + ".classpath}");
+        rootElement.getChildren().add(idx + 1, javaCompilerProperty);
     }
 }

@@ -1,6 +1,9 @@
 package hu.infostyle.parsedotclasspath;
 
+import hu.infostyle.parsedotclasspath.antutils.AntExportable;
+import hu.infostyle.parsedotclasspath.buildtemplate.AndroidLibraryBuildTemplate;
 import hu.infostyle.parsedotclasspath.eclipseutils.ClasspathUtil;
+import hu.infostyle.parsedotclasspath.eclipseutils.EclipseProjectType;
 import hu.infostyle.parsedotclasspath.eclipseutils.EnvironmentVariables;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -10,6 +13,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
 
@@ -90,6 +94,12 @@ public class ParseDotClasspath {
                 classpathExporter.addPath((String)a.get(i));
                 classpathExporter.addClasspath(ClasspathUtil.valueOf(stringBuffer.toString()));
                 stringBuffer.setLength(0);
+                EclipseProjectType projectType = ClasspathUtil.getProjectType(dotCp.getAbsolutePath());
+                if (isAndroidLibProject(ClasspathUtil.getProjectType(dotCp.getAbsolutePath()), dotCp)) {
+                    String path = dotCp.getAbsolutePath() + File.separator + "gen_build.xml";
+                    AndroidLibraryBuildTemplate template = new AndroidLibraryBuildTemplate(environmentVariables, path);
+                    template.export();
+                }
             }
             classpathExporter.export(environmentVariables);
         }
@@ -103,17 +113,18 @@ public class ParseDotClasspath {
     public static void parseDotClasspath(File dotClasspath, final ClasspathBuilder builder) throws IOException, SAXException, ParserConfigurationException {
         // all entries in .classpath are relative to this directory.
         final File baseDir = dotClasspath.getParentFile().getAbsoluteFile();
-        HashMap<String, Object> classpathCopyMap = new HashMap<String, Object>();
 
 //        XMLReader parser = XMLReaderFactory.createXMLReader();
         SAXParserFactory spf = SAXParserFactory.newInstance();
         spf.setNamespaceAware(true);
         XMLReader parser = spf.newSAXParser().getXMLReader();
         parser.setContentHandler(new DefaultHandler() {
+
+
+
             public void startElement(String uri, String localName, String qname, Attributes atts) {
                 if (!localName.equals("classpathentry"))
                     return; // unknown
-
                 String kind = atts.getValue("kind");
                 if (kind != null && kinds.contains(kind)) {
                     String path = atts.getValue("path");
@@ -145,6 +156,24 @@ public class ParseDotClasspath {
         parser.parse(dotClasspath.toURI().toURL().toString());
 
     }
+
+    private static boolean isAndroidLibProject(EclipseProjectType eclipseProjectType, File baseDir) {
+        if (eclipseProjectType.equals(EclipseProjectType.ANDROID)) {
+            Properties localProperties = new Properties();
+            try {
+                localProperties.load(new FileInputStream(baseDir.getAbsolutePath() + File.separator + "project.properties"));
+                if (localProperties.getProperty("android.library") != null)
+                    return true;
+                return false;
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException(String.format("project.properties not found in %s", baseDir.getAbsolutePath()));
+            }
+        }
+        return false;
+    }
+
+
 
     private static File absolutize(File base, String path) {
         path = path.replace('/', File.separatorChar);

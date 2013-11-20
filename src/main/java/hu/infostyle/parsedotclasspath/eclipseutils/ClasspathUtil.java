@@ -16,6 +16,7 @@ public class ClasspathUtil {
     public static final String ORG_ECLIPSE_JDT_CORE_PREFS_DIR = ".metadata/.plugins/org.eclipse.core.runtime/.settings";
     public static final String ORG_ECLIPSE_JDT_CORE_PREFS_FILE = "org.eclipse.jdt.core.prefs";
     public static final String ECLIPSE_PREFS_CPVAR_PREFIX = "org.eclipse.jdt.core.classpathVariable";
+    public static final String CLASSPATHFILENAME = ".classpath";
     public static final String CP_ELEMENT_CPENTRY = "classpathentry";
     public static final String CP_ATTR_KIND = "kind";
     public static final String CP_ATTR_KIND_PATH = "path";
@@ -41,10 +42,10 @@ public class ClasspathUtil {
     }
 
     public static EclipseProjectType getProjectType(String projectPath) {
-        File classpathFile = new File(projectPath);
+        File projectFile = new File(projectPath + ".project");
         SAXBuilder saxBuilder = new SAXBuilder();
         try {
-            Document document = saxBuilder.build(classpathFile);
+            Document document = saxBuilder.build(projectFile);
             Element natures = document.getRootElement();
             if (natures != null) {
                 for(Element nature : natures.getChildren()) {

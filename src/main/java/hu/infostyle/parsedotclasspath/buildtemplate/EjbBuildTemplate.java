@@ -1,50 +1,19 @@
 package hu.infostyle.parsedotclasspath.buildtemplate;
 
 import hu.infostyle.parsedotclasspath.antutils.AntExportable;
-import hu.infostyle.parsedotclasspath.antutils.AntPropertyType;
 import hu.infostyle.parsedotclasspath.antutils.AntUtils;
 import org.apache.commons.io.FileUtils;
-import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.List;
 
-public class EjbBuildTemplate implements AntExportable {
-    protected String filePathAndName;
-    protected File outputFile;
-    protected Document buildFileContent;
+public class EjbBuildTemplate extends BaseTemplate implements AntExportable {
     protected HashMap<String, Object> classpathVarMap;
-
-
-    public String getFilePathAndName() {
-        return filePathAndName;
-    }
-
-    public void setFilePathAndName(String filePathAndName) {
-        this.filePathAndName = filePathAndName;
-    }
-
-    public File getOutputFilenameWithPath() {
-        return outputFile;
-    }
-
-    public void setOutputFilenameWithPath(File file) {
-        this.outputFile = file;
-    }
-
-    public Document getBuildFileContent() {
-        return buildFileContent;
-    }
-
-    public void setBuildFileContent(Document buildFileContent) {
-        this.buildFileContent = buildFileContent;
-    }
 
     public HashMap<String, Object> getClasspathVarMap() {
         return classpathVarMap;
@@ -55,9 +24,7 @@ public class EjbBuildTemplate implements AntExportable {
     }
 
     public EjbBuildTemplate(String outputFilenameWithPath) {
-        this.filePathAndName = outputFilenameWithPath;
-        this.outputFile = new File(this.filePathAndName);
-        this.buildFileContent = new Document();
+        super(outputFilenameWithPath);
     }
 
     @Override
@@ -87,25 +54,6 @@ public class EjbBuildTemplate implements AntExportable {
         projectElement.setAttribute(AntUtils.BUILD_PROJECT_DEF_ATTR, "build-project");
         projectElement.setAttribute(AntUtils.BUILD_PROJECT_BASEDIR_ATTR, ".");
         buildFileContent.setRootElement(projectElement);
-    }
-
-    public void addPropertyFileElement(AntPropertyType propertyType, String propertyValue) {
-        if (!buildFileContent.hasRootElement()) {
-            this.createBuildFileWithProjectElement();
-        }
-        Element propertyElement = new Element(AntUtils.BUILD_PROPERTY_ELEMENT);
-        propertyElement.setAttribute(propertyType.getPropertyType(), propertyValue);
-        this.appendContentToBuildFile(buildFileContent, propertyElement);
-    }
-
-    public void addPropertyNameElement(AntPropertyType propertyType, String key, String value) {
-        if (!buildFileContent.hasRootElement()) {
-            this.createBuildFileWithProjectElement();
-        }
-        Element propertyElement = new Element(AntUtils.BUILD_PROPERTY_ELEMENT);
-        propertyElement.setAttribute(propertyType.getPropertyType(), key);
-        propertyElement.setAttribute(AntUtils.BUILD_PROPERTY_VALUE_ATTR, value);
-        this.appendContentToBuildFile(buildFileContent, propertyElement);
     }
 
     public void addClasspathElement(String classpathValue) {
@@ -176,12 +124,5 @@ public class EjbBuildTemplate implements AntExportable {
         javac.addContent(new Element(AntUtils.BUILD_CLASSPATH_ELEMENT).setAttribute(AntUtils.BUILD_CLASSPATH_REFID_ATTR, classPath));
         target.addContent(javac);
         this.appendContentToBuildFile(buildFileContent, target);
-    }
-
-    protected void appendContentToBuildFile(Document buildFile, Element contentToAppend) {
-        if (buildFile != null && contentToAppend != null)
-            buildFile.getRootElement().addContent(contentToAppend);
-        else
-            throw new RuntimeException("Can not append node to buildfile");
     }
 }
