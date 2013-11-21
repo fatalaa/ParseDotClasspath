@@ -7,7 +7,7 @@ import junit.framework.TestCase;
 public class AndroidLibraryBuildTemplateTest extends TestCase {
     public void testUpdate() {
         EnvironmentVariables environmentVariables = new EnvironmentVariables("d:\\Work\\");
-        AndroidLibraryBuildTemplate template = new AndroidLibraryBuildTemplate(environmentVariables);
+        AndroidLibraryBuildTemplate template = new AndroidLibraryBuildTemplate(environmentVariables, "");
         template.setProjectHome("d:\\Work\\com_facebook_android\\");
         assertEquals(true, template.executeUpdateOnProject());
     }

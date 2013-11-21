@@ -1,7 +1,9 @@
 package hu.infostyle.parsedotclasspath;
 
 import hu.infostyle.parsedotclasspath.antutils.AntExportable;
+import hu.infostyle.parsedotclasspath.antutils.AntPropertyType;
 import hu.infostyle.parsedotclasspath.buildtemplate.AndroidLibraryBuildTemplate;
+import hu.infostyle.parsedotclasspath.buildtemplate.EjbBuildTemplate;
 import hu.infostyle.parsedotclasspath.eclipseutils.ClasspathUtil;
 import hu.infostyle.parsedotclasspath.eclipseutils.EclipseProjectType;
 import hu.infostyle.parsedotclasspath.eclipseutils.EnvironmentVariables;
@@ -26,6 +28,7 @@ import java.util.*;
 public class ParseDotClasspath {
 
     private static EnvironmentVariables environmentVariables;
+    private static HashMap<String, Object> templateSettings;
 
     private static final String KIND_VAR = "var";
 
@@ -58,6 +61,7 @@ public class ParseDotClasspath {
 
     public static void main(String[] args) throws Exception {
         environmentVariables = new EnvironmentVariables(args[0]);
+        templateSettings = new HashMap<String, Object>();
         List a = new ArrayList();
 
         for (int i = 1; i < args.length; i++) {
@@ -95,10 +99,30 @@ public class ParseDotClasspath {
                 classpathExporter.addClasspath(ClasspathUtil.valueOf(stringBuffer.toString()));
                 stringBuffer.setLength(0);
                 EclipseProjectType projectType = ClasspathUtil.getProjectType(dotCp.getAbsolutePath());
-                if (isAndroidLibProject(ClasspathUtil.getProjectType(dotCp.getAbsolutePath()), dotCp)) {
-                    String path = dotCp.getAbsolutePath() + File.separator + "gen_build.xml";
-                    AndroidLibraryBuildTemplate template = new AndroidLibraryBuildTemplate(environmentVariables, path);
-                    template.export();
+                switch (projectType) {
+                    case EJB: {
+                        EjbBuildTemplate ejbTemplate = new EjbBuildTemplate(dotCp.getAbsolutePath() + File.separator + "gen_build.xml");
+                        ejbTemplate.createBuildFileWithProjectElement();
+                        ejbTemplate.addPropertyElement(AntPropertyType.FILE, null, "gen_global.properties");
+                        ejbTemplate.addPropertyElement(AntPropertyType.NAME, "debuglevel", "source,lines,vars");
+                        ejbTemplate.addPropertyElement(AntPropertyType.NAME, "target", "1.6");
+                        ejbTemplate.addPropertyElement(AntPropertyType.NAME, "source", "1.6");
+                        ejbTemplate.addPropertyElement(AntPropertyType.NAME, "encoding", "UTF-8");
+                        ejbTemplate.addClasspathElement(dotCp.getName());
+                        ejbTemplate.addInitTarget((String)templateSettings.get("classesDir"), (String)templateSettings.get("src"),
+                                                  (List<String>)templateSettings.get("excludesList"), false);
+                        ejbTemplate.addBuildProjectTarget(true, (String)templateSettings.get("classesDir"),
+                                                          (String)templateSettings.get("src"), "${" + dotCp.getName() + "}");
+                        List<String> dirsToDelete = new ArrayList<String>();
+                        dirsToDelete.add((String)templateSettings.get("classesDir"));
+                        ejbTemplate.addCleanTarget(dirsToDelete);
+                        ejbTemplate.addCleanAllTarget();
+                        ejbTemplate.export();
+                    }
+                    case ANDROID: {
+                        //TODO
+                        //Implement me
+                    }
                 }
             }
             classpathExporter.export(environmentVariables);
@@ -137,9 +161,11 @@ public class ParseDotClasspath {
                         path = "${"+path.substring(1)+".classpath}";
                         builder.add(path);
                     } else if(kind.equals("src") && path.equals("src") ) {
-                        //Do nothing
-
-                    } else if(kind.equals("lib") && kind.endsWith("xml")) {
+                        templateSettings.put("src", "src");
+                    } else if(kind.equals("output")) {
+                        templateSettings.put("classesDir", atts.getValue("path"));
+                    }
+                    else if(kind.equals("lib") && kind.endsWith("xml")) {
                         //TODO
                         //Handle GWT datasource xml files
                     } else {
