@@ -14,7 +14,7 @@ public final class ClasspathBuilder {
      */
     private String separator = File.pathSeparator;
 
-    private final StringBuffer buf = new StringBuffer();
+    private final StringBuffer stringBuffer = new StringBuffer();
 
     /**
      * Overrides the platform-default separator string.
@@ -24,27 +24,27 @@ public final class ClasspathBuilder {
     }
 
     public void reset() {
-        buf.setLength(0);
+        stringBuffer.setLength(0);
     }
 
     /**
      * Adds a new entry
      */
     public void add(File f) {
-        if (buf.length() != 0)
-            buf.append(separator);
-        buf.append(f.toString());
+        if (stringBuffer.length() != 0)
+            stringBuffer.append(separator);
+        stringBuffer.append(f.toString());
     }
     public void add(String f) {
-        if (buf.length() != 0)
-            buf.append(separator);
-        buf.append(f);
+        if (stringBuffer.length() != 0)
+            stringBuffer.append(separator);
+        stringBuffer.append(f);
     }
 
     /**
      * Returns the string formatted for the CLASSPATH variable.
      */
     public String getResult() {
-        return buf.toString();
+        return stringBuffer.toString();
     }
 }

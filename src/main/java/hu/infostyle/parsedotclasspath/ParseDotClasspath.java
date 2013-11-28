@@ -1,12 +1,9 @@
 package hu.infostyle.parsedotclasspath;
 
-import hu.infostyle.parsedotclasspath.antutils.AntExportable;
-import hu.infostyle.parsedotclasspath.antutils.AntPropertyType;
-import hu.infostyle.parsedotclasspath.buildtemplate.AndroidLibraryBuildTemplate;
 import hu.infostyle.parsedotclasspath.buildtemplate.EjbBuildTemplate;
-import hu.infostyle.parsedotclasspath.eclipseutils.ClasspathUtil;
-import hu.infostyle.parsedotclasspath.eclipseutils.EclipseProjectType;
-import hu.infostyle.parsedotclasspath.eclipseutils.EnvironmentVariables;
+import hu.infostyle.parsedotclasspath.eclipseutil.ClasspathUtil;
+import hu.infostyle.parsedotclasspath.eclipseutil.EclipseProjectType;
+import hu.infostyle.parsedotclasspath.eclipseutil.EnvironmentVariables;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
@@ -15,198 +12,123 @@ import org.xml.sax.helpers.DefaultHandler;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * Parses Eclipse's &#x2E;classpath files and turns them into
- * the CLASSPATH env var format.
- *
- * @author Tibor Molnár (fatalaa@hotmail.com)
- */
 public class ParseDotClasspath {
-
     private static EnvironmentVariables environmentVariables;
     private static HashMap<String, Object> templateSettings;
+    private static PropertyExporter propertyExporter;
+    private static Set<String> kinds = new HashSet<String>(Arrays.asList(new String[]{"lib", "output", "src", "var"}));
 
-    private static final String KIND_VAR = "var";
-
-    static Set kinds = new HashSet(Arrays.asList(new String[]{"lib", "output", "src", KIND_VAR}));
-
-    private static void usage() {
-        System.err.println(
-                "Usage: java -jar parse-dot-classpath.jar [<options>] <file>*\n" +
-                        "Reads Eclipse's .classpath file(s), format them as a CLASSPATH\n" +
-                        "env var format, then print it to stdout.\n" +
-                        "\n" +
-                        "if a file is specified, it will be read as a .classpath file\n" +
-                        "if a directory is specified, .classpath inside ths given directory will be read\n" +
-                        "if no argument is specified, ./.classpath will be read\n" +
-                        "\n" +
-                        "Options:\n" +
-                        "  -s <sep>: change the path separator to <sep>.\n" +
-                        "Define system properties to use as the prefix of kind=var classpath entries\n" +
-                        "for example -DM2_REPO=c:/m2/repository\n"
-        );
-    }
-
-    public EnvironmentVariables getEnvironmentVariables() {
-        return environmentVariables;
-    }
-
-    public void setEnvironmentVariables(EnvironmentVariables variables) {
-        environmentVariables = variables;
-    }
-
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException, SAXException, ParserConfigurationException {
+        //The first argument must be the Eclispse workspace's absolute path
         environmentVariables = new EnvironmentVariables(args[0]);
         templateSettings = new HashMap<String, Object>();
-        List a = new ArrayList();
+        propertyExporter = new PropertyExporter();
+        List<String> projectDirectories = new ArrayList<String>();
 
         for (int i = 1; i < args.length; i++) {
-            String arg = args[i].intern();
-            if (arg == "-s") {
-                //builder.setSeparator(args[++i]);
-                continue;
-            }
-            if (arg.startsWith("-")) {
-                usage();
-                System.exit(-1);
-            }
-            a.add(arg);
+            projectDirectories.add(args[i].intern());
         }
 
-        if (a.size() == 0) {
-            // no argument specified. read from the current dir
-            ClasspathBuilder builder = new ClasspathBuilder();
-
-            parseDotClasspath(new File("./.classpath"), builder);
-        } else {
-            ClasspathExporter classpathExporter = new ClasspathExporter();
-            for (int i = 0; i < a.size(); i++) {
-                File dotCp = new File((String) a.get(i));
-                StringBuffer stringBuffer = new StringBuffer();
-                if (dotCp.isDirectory()) {
-                    // if directory, append the default name
-                    dotCp = new File(dotCp, ".classpath");
+        for(int i = 0; i < projectDirectories.size(); i++) {
+            File dotClasspathFile = new File(projectDirectories.get(i), ClasspathUtil.CLASSPATHFILENAME);
+            templateSettings.put("classpathName", new File(projectDirectories.get(i)).getName());
+            StringBuffer stringBuffer = new StringBuffer();
+            ClasspathBuilder classpathBuilder = new ClasspathBuilder();
+            parseDotClasspath(dotClasspathFile, classpathBuilder);
+            stringBuffer.append(dotClasspathFile.getParentFile().getName() + ".classpath=" + classpathBuilder.getResult());
+            propertyExporter.addPath(projectDirectories.get(i));
+            propertyExporter.addClasspath(ClasspathUtil.valueOf(stringBuffer.toString()));
+            stringBuffer.setLength(0);
+            EclipseProjectType projectType = ClasspathUtil.getProjectType(projectDirectories.get(i));
+            switch (projectType) {
+                case EJB: {
+                    EjbBuildTemplate ejbBuildTemplate = new EjbBuildTemplate(projectDirectories.get(i) + File.separator + "gen_build.xml");
+                    ejbBuildTemplate.init();
+                    String classpathVariableName = new File(projectDirectories.get(i)).getName() + ".classpath";
+                    ejbBuildTemplate.addClasspathElement(classpathVariableName);
+                    ejbBuildTemplate.addInitTarget((String)templateSettings.get("classesDir"), (String)templateSettings.get("src"),
+                                                   (List<String>)templateSettings.get("excludesList"), false);
+                    ejbBuildTemplate.addBuildProjectTarget(true, (String)templateSettings.get("classesDir"),
+                                                          (String)templateSettings.get("src"),
+                                                           classpathVariableName);
+                    List<String> dirsToDelete = new ArrayList<String>();
+                    dirsToDelete.add((String)templateSettings.get("classesDir"));
+                    ejbBuildTemplate.addCleanTarget(dirsToDelete);
+                    ejbBuildTemplate.addCleanAllTarget();
+                    ejbBuildTemplate.export();
+                    templateSettings.clear();
+                    break;
                 }
-                ClasspathBuilder builder = new ClasspathBuilder();
-
-                parseDotClasspath(dotCp, builder);
-                stringBuffer.append(dotCp.getParentFile().getName() + ".classpath=" + builder.getResult());
-                classpathExporter.addPath((String)a.get(i));
-                classpathExporter.addClasspath(ClasspathUtil.valueOf(stringBuffer.toString()));
-                stringBuffer.setLength(0);
-                EclipseProjectType projectType = ClasspathUtil.getProjectType(dotCp.getAbsolutePath());
-                switch (projectType) {
-                    case EJB: {
-                        EjbBuildTemplate ejbTemplate = new EjbBuildTemplate(dotCp.getAbsolutePath() + File.separator + "gen_build.xml");
-                        ejbTemplate.createBuildFileWithProjectElement();
-                        ejbTemplate.addPropertyElement(AntPropertyType.FILE, null, "gen_global.properties");
-                        ejbTemplate.addPropertyElement(AntPropertyType.NAME, "debuglevel", "source,lines,vars");
-                        ejbTemplate.addPropertyElement(AntPropertyType.NAME, "target", "1.6");
-                        ejbTemplate.addPropertyElement(AntPropertyType.NAME, "source", "1.6");
-                        ejbTemplate.addPropertyElement(AntPropertyType.NAME, "encoding", "UTF-8");
-                        ejbTemplate.addClasspathElement(dotCp.getName());
-                        ejbTemplate.addInitTarget((String)templateSettings.get("classesDir"), (String)templateSettings.get("src"),
-                                                  (List<String>)templateSettings.get("excludesList"), false);
-                        ejbTemplate.addBuildProjectTarget(true, (String)templateSettings.get("classesDir"),
-                                                          (String)templateSettings.get("src"), "${" + dotCp.getName() + "}");
-                        List<String> dirsToDelete = new ArrayList<String>();
-                        dirsToDelete.add((String)templateSettings.get("classesDir"));
-                        ejbTemplate.addCleanTarget(dirsToDelete);
-                        ejbTemplate.addCleanAllTarget();
-                        ejbTemplate.export();
-                    }
-                    case ANDROID: {
-                        //TODO
-                        //Implement me
-                    }
+                case ANDROID: {
+                    break;
                 }
+                default:
+                    templateSettings.clear();
+                    break;
             }
-            classpathExporter.export(environmentVariables);
+
         }
-        System.exit(0);
+        propertyExporter.export(environmentVariables, args[0]);
     }
 
-    /**
-     * Reads a ".classpath" file and turns it into a string
-     * formatted to fit the CLASSPATH variable.
-     */
-    public static void parseDotClasspath(File dotClasspath, final ClasspathBuilder builder) throws IOException, SAXException, ParserConfigurationException {
-        // all entries in .classpath are relative to this directory.
-        final File baseDir = dotClasspath.getParentFile().getAbsoluteFile();
-
-//        XMLReader parser = XMLReaderFactory.createXMLReader();
-        SAXParserFactory spf = SAXParserFactory.newInstance();
-        spf.setNamespaceAware(true);
-        XMLReader parser = spf.newSAXParser().getXMLReader();
-        parser.setContentHandler(new DefaultHandler() {
-
-
-
-            public void startElement(String uri, String localName, String qname, Attributes atts) {
-                if (!localName.equals("classpathentry"))
-                    return; // unknown
-                String kind = atts.getValue("kind");
-                if (kind != null && kinds.contains(kind)) {
-                    String path = atts.getValue("path");
-                    if (kind.equals(KIND_VAR)) {
-                        int i = path.indexOf('/');
-                        String dir = environmentVariables.getVariableByKey(path.substring(0, i));
-                        path = dir + '/' + path.substring(i + 1);
-                        builder.add(absolutize(baseDir, path));
-                    } else if(kind.equals("src") && path.startsWith("/")) {
-                        path = "${"+path.substring(1)+".classpath}";
-                        builder.add(path);
-                    } else if(kind.equals("src") && path.equals("src") ) {
-                        templateSettings.put("src", "src");
-                    } else if(kind.equals("output")) {
-                        templateSettings.put("classesDir", atts.getValue("path"));
-                    }
-                    else if(kind.equals("lib") && kind.endsWith("xml")) {
-                        //TODO
-                        //Handle GWT datasource xml files
-                    } else {
-                        builder.add(absolutize(baseDir, path));
-                    }
-                }
-
-                String output = atts.getValue("output");
-                if (output != null) {
-                    builder.add(absolutize(baseDir, output));
-                }
-            }
-        });
-        parser.parse(dotClasspath.toURI().toURL().toString());
-
-    }
-
-    private static boolean isAndroidLibProject(EclipseProjectType eclipseProjectType, File baseDir) {
-        if (eclipseProjectType.equals(EclipseProjectType.ANDROID)) {
-            Properties localProperties = new Properties();
-            try {
-                localProperties.load(new FileInputStream(baseDir.getAbsolutePath() + File.separator + "project.properties"));
-                if (localProperties.getProperty("android.library") != null)
-                    return true;
-                return false;
-            } catch (IOException e) {
-                e.printStackTrace();
-                throw new RuntimeException(String.format("project.properties not found in %s", baseDir.getAbsolutePath()));
-            }
-        }
-        return false;
-    }
-
-
-
-    private static File absolutize(File base, String path) {
+    private static File absolutizeFile(File base, String path) {
         path = path.replace('/', File.separatorChar);
+        path = path.replace('\\', File.separatorChar);
         File child = new File(path);
         if (child.isAbsolute())
             return child;
         else
             return new File(base, path);
+    }
+
+    private static String makeAntVariableFromString(String variable) {
+        return new StringBuilder("${").append(variable).append(".classpath}").toString();
+    }
+
+    private static void parseDotClasspath(File dotClasspathFile, final ClasspathBuilder classpathBuilder)
+                                            throws ParserConfigurationException, SAXException, IOException {
+        final File projectDirectory = dotClasspathFile.getParentFile().getAbsoluteFile();
+
+        SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+        saxParserFactory.setNamespaceAware(true);
+        XMLReader parser = saxParserFactory.newSAXParser().getXMLReader();
+        parser.setContentHandler(new DefaultHandler() {
+            public void startElement(String uri, String localname, String qname, Attributes atts) {
+                if (!localname.equals("classpathentry"))
+                    return;
+                String cpEntryKind = atts.getValue("kind");
+                if (cpEntryKind != null && kinds.contains(cpEntryKind)) {
+                    String path = atts.getValue("path");
+                    if (cpEntryKind.equals("var")) {
+                        int i = path.indexOf("/");
+                        String dir = environmentVariables.getVariableByKey(path.substring(0, i));
+                        path = dir + File.separator + path.substring(i + 1);
+                        classpathBuilder.add(absolutizeFile(projectDirectory, path));
+                    } else if (cpEntryKind.equals("src")) {
+                        if (path.startsWith("/")) {
+                            String dependencyClasspathName = path.substring(1);
+                            classpathBuilder.add(makeAntVariableFromString(dependencyClasspathName));
+                        } else {
+                            templateSettings.put("src", path);
+                            String excludes = atts.getValue("excluding");
+                            if (excludes != null) {
+                                templateSettings.put("excludesList", Arrays.asList(excludes.split("\\|")));
+                            }
+                        }
+                    } else if (cpEntryKind.equals("output")) {
+                        templateSettings.put("classesDir", path);
+                        classpathBuilder.add(absolutizeFile(projectDirectory, path));
+                    } else if(cpEntryKind.equals("con")) {
+                        return;
+                    } else {
+                        classpathBuilder.add(absolutizeFile(projectDirectory, path));
+                    }
+                }
+            }
+        });
+        parser.parse(dotClasspathFile.toURI().toURL().toString());
     }
 }

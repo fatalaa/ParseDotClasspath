@@ -1,6 +1,6 @@
 package hu.infostyle.parsedotclasspath.buildtemplate;
 
-import hu.infostyle.parsedotclasspath.antutils.AntUtils;
+import hu.infostyle.parsedotclasspath.antutil.AntUtils;
 import org.apache.commons.io.FileUtils;
 import org.jdom2.Element;
 import org.jdom2.output.Format;

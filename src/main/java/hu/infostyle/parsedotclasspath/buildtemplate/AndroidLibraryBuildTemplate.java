@@ -1,18 +1,16 @@
 package hu.infostyle.parsedotclasspath.buildtemplate;
 
-import hu.infostyle.parsedotclasspath.antutils.AntExportable;
-import hu.infostyle.parsedotclasspath.antutils.AntPropertyType;
-import hu.infostyle.parsedotclasspath.eclipseutils.ClasspathUtil;
-import hu.infostyle.parsedotclasspath.eclipseutils.EnvironmentVariables;
+import hu.infostyle.parsedotclasspath.antutil.AntExportable;
+import hu.infostyle.parsedotclasspath.eclipseutil.EnvironmentVariables;
 import org.apache.commons.io.FileUtils;
-import org.jdom2.Document;
 import org.jdom2.Element;
-import org.jdom2.JDOMException;
-import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -20,14 +18,10 @@ import java.util.Properties;
 
 public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExportable {
     private static String androidHome;
-    private String projectHome;
+
 
     public String getProjectHome() {
-        return projectHome;
-    }
-
-    public void setProjectHome(String projectHome) {
-        this.projectHome = projectHome;
+        return this.outputFile.getParentFile().getAbsolutePath();
     }
 
     public AndroidLibraryBuildTemplate(EnvironmentVariables environmentVariables, String outputFileWithPath) {
@@ -39,9 +33,10 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
         throw new RuntimeException("ANDROID_HOME is not set in Eclipse");
     }
 
-    public boolean executeUpdateOnProject() {
+    public boolean executeUpdateOnProject(int targetApiLevel) {
         StringBuilder stringBuilder = new StringBuilder(androidHome);
-        stringBuilder.append("//tools//android.bat -v update lib-project -p .").append(projectHome).append(" -t 1");
+        stringBuilder.append("//tools//android.bat -v update lib-project -p ").append(getProjectHome())
+                .append(String.format(" -t %s", targetApiLevel));
         try {
             Process process = Runtime.getRuntime().exec(stringBuilder.toString());
             int exitValue = process.waitFor();
@@ -60,7 +55,7 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
     @Override
     public void export() {
 
-        if (executeUpdateOnProject()) {
+        if (executeUpdateOnProject(1)) {
             List<String> dependencies = getDependencyProjects();
             if (dependencies.size() > 0)
                 this.addSpecificationToProject();
@@ -88,7 +83,7 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
     private Properties openProjectPropertyFile() {
         Properties properties = new Properties();
         try {
-            properties.load(new FileInputStream(projectHome + File.separator + "project.properties"));
+            properties.load(new FileInputStream(getProjectHome() + File.separator + "project.properties"));
             return properties;
         } catch (IOException e) {
             e.printStackTrace();
@@ -120,7 +115,7 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
             }
         }
         Element javaCompilerProperty = new Element("property").setAttribute("name", "java.compiler.classpath")
-                .setAttribute("value", "${" + projectHome + ".classpath}");
+                .setAttribute("value", "${" + getProjectHome() + ".classpath}");
         rootElement.getChildren().add(idx + 1, javaCompilerProperty);
     }
 }

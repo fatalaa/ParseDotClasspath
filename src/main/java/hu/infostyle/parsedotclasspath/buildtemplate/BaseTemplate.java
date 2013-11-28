@@ -1,8 +1,8 @@
 package hu.infostyle.parsedotclasspath.buildtemplate;
 
-import hu.infostyle.parsedotclasspath.antutils.AntPropertyType;
-import hu.infostyle.parsedotclasspath.antutils.AntUtils;
-import hu.infostyle.parsedotclasspath.antutils.PropertyFileOperator;
+import hu.infostyle.parsedotclasspath.antutil.AntPropertyType;
+import hu.infostyle.parsedotclasspath.antutil.AntUtils;
+import hu.infostyle.parsedotclasspath.antutil.PropertyFileOperator;
 import org.jdom2.Document;
 import org.jdom2.Element;
 
@@ -10,12 +10,10 @@ import java.io.File;
 
 public abstract class BaseTemplate implements PropertyFileOperator {
     protected Document buildFileContent;
-    protected String filePathAndName;
     protected File outputFile;
 
     protected BaseTemplate(String outputFilenameWithPath) {
-        this.filePathAndName = outputFilenameWithPath;
-        this.outputFile = new File(this.filePathAndName);
+        this.outputFile = new File(outputFilenameWithPath);
         this.buildFileContent = new Document();
     }
 
@@ -27,14 +25,6 @@ public abstract class BaseTemplate implements PropertyFileOperator {
         this.buildFileContent = buildFileContent;
     }
 
-    public String getFilePathAndName() {
-        return filePathAndName;
-    }
-
-    public void setFilePathAndName(String filePathAndName) {
-        this.filePathAndName = filePathAndName;
-    }
-
     public File getOutputFilenameWithPath() {
         return outputFile;
     }
@@ -44,7 +34,7 @@ public abstract class BaseTemplate implements PropertyFileOperator {
     }
 
     @Override
-     public void addPropertyElement(AntPropertyType propertyType, String propertyKey, String propertyValue) {
+    public void addPropertyElement(AntPropertyType propertyType, String propertyKey, String propertyValue) {
         if (!buildFileContent.hasRootElement())
             throw new RuntimeException("Build file has no root element");
         if (propertyType.equals(AntPropertyType.FILE)) {

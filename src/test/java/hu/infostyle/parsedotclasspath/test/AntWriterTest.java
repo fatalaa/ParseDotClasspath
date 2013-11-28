@@ -1,10 +1,10 @@
 package hu.infostyle.parsedotclasspath.test;
 
-import hu.infostyle.parsedotclasspath.antutils.AntBuildWriter;
-import hu.infostyle.parsedotclasspath.antutils.AntPropertyType;
-import hu.infostyle.parsedotclasspath.antutils.AntUtils;
+import hu.infostyle.parsedotclasspath.antutil.AntBuildWriter;
+import hu.infostyle.parsedotclasspath.antutil.AntPropertyType;
+import hu.infostyle.parsedotclasspath.antutil.AntUtils;
 import hu.infostyle.parsedotclasspath.buildtemplate.EjbBuildTemplate;
-import hu.infostyle.parsedotclasspath.eclipseutils.ClasspathUtil;
+import hu.infostyle.parsedotclasspath.eclipseutil.ClasspathUtil;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
@@ -12,7 +12,7 @@ import java.util.ArrayList;
 public class AntWriterTest extends TestCase {
 	
 	//public static final String WS_ROOT = "D:/Work/base/dev/is_base/";
-	public static final String WS_ROOT = "D:/work/";
+	/*public static final String WS_ROOT = "D:/work/";
 	
     public void testIsBasePropertyWrite() {
         EjbBuildTemplate ejbBuildTemplate = new EjbBuildTemplate(WS_ROOT+"gen_build.xml");
@@ -69,5 +69,5 @@ public class AntWriterTest extends TestCase {
 
         AntBuildWriter buildWriter = new AntBuildWriter();
         buildWriter.export(ejbBuildTemplate);
-    }    
+    }    */
 }

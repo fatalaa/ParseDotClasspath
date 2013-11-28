@@ -1,7 +1,7 @@
 package hu.infostyle.parsedotclasspath;
 
-import hu.infostyle.parsedotclasspath.eclipseutils.ClasspathUtil;
-import hu.infostyle.parsedotclasspath.eclipseutils.EnvironmentVariables;
+import hu.infostyle.parsedotclasspath.eclipseutil.ClasspathUtil;
+import hu.infostyle.parsedotclasspath.eclipseutil.EnvironmentVariables;
 
 import java.io.File;
 import java.io.FileWriter;

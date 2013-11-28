@@ -1,14 +1,17 @@
 package hu.infostyle.parsedotclasspath.buildtemplate;
 
-import hu.infostyle.parsedotclasspath.antutils.AntExportable;
-import hu.infostyle.parsedotclasspath.antutils.AntUtils;
+import hu.infostyle.parsedotclasspath.antutil.AntExportable;
+import hu.infostyle.parsedotclasspath.antutil.AntPropertyType;
+import hu.infostyle.parsedotclasspath.antutil.AntUtils;
 import org.apache.commons.io.FileUtils;
 import org.jdom2.Element;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -25,6 +28,7 @@ public class EjbBuildTemplate extends BaseTemplate implements AntExportable {
 
     public EjbBuildTemplate(String outputFilenameWithPath) {
         super(outputFilenameWithPath);
+        classpathVarMap = new HashMap<String, Object>();
     }
 
     @Override
@@ -48,6 +52,15 @@ public class EjbBuildTemplate extends BaseTemplate implements AntExportable {
         }
     }
 
+    public void init() {
+        this.createBuildFileWithProjectElement();
+        this.addPropertyElement(AntPropertyType.FILE, null, "../gen_global.properties");
+        this.addPropertyElement(AntPropertyType.NAME, "debuglevel", "source,lines,vars");
+        this.addPropertyElement(AntPropertyType.NAME, "target", "1.6");
+        this.addPropertyElement(AntPropertyType.NAME, "source", "1.6");
+        this.addPropertyElement(AntPropertyType.NAME, "encoding", "UTF-8");
+    }
+
     public void createBuildFileWithProjectElement() {
         Element projectElement = new Element(AntUtils.BUILD_PROJECT_ELEMENT);
         projectElement.setAttribute(AntUtils.BUILD_PROJECT_NAME_ATTR, outputFile.getParentFile().getName());
@@ -56,16 +69,21 @@ public class EjbBuildTemplate extends BaseTemplate implements AntExportable {
         buildFileContent.setRootElement(projectElement);
     }
 
-    public void addClasspathElement(String classpathValue) {
+    public void addClasspathElement(String projectDirectory) {
+        String classpathVariableName = new File(projectDirectory).getName();
         Element classpath = new Element(AntUtils.BUILD_PATH_ELEMENT);
-        classpath.setAttribute(AntUtils.BUILD_PATH_ID_ATTR, classpathValue);
+        classpath.setAttribute(AntUtils.BUILD_PATH_ID_ATTR, classpathVariableName);
         Element pathElement = new Element(AntUtils.BUILD_PATHELEMENT);
-        pathElement.setAttribute(AntUtils.BUILD_PATH_PATHELEMENT_PATH_ATTR, String.format("${%s}", classpathValue));
+        pathElement.setAttribute(AntUtils.BUILD_PATH_PATHELEMENT_PATH_ATTR, String.format("${%s}", classpathVariableName));
         classpath.addContent(pathElement);
         this.appendContentToBuildFile(buildFileContent, classpath);
     }
 
     public void addInitTarget(String classesDir, String sourceDir, List<String> excludesList, boolean includeEmptyDirs) {
+        if (excludesList == null) {
+            excludesList = new ArrayList<String>();
+            excludesList.add("**/*.java");
+        }
         Element target = new Element(AntUtils.BUILD_TARGET_ELEMENT);
         target.setAttribute(AntUtils.BUILD_TARGET_NAME_ATTR, AntUtils.BUILD_TARGET_NAME_INIT);
         Element mkdir = new Element(AntUtils.BUILD_MKDIR_ELEMENT);
@@ -75,12 +93,10 @@ public class EjbBuildTemplate extends BaseTemplate implements AntExportable {
         copy.setAttribute(AntUtils.BUILD_COPY_INCLEMPTYDIRS, Boolean.valueOf(includeEmptyDirs).toString());
         Element fileset = new Element(AntUtils.BUILD_FILESET_ELEMENT);
         fileset.setAttribute(AntUtils.BUILD_FILESET_DIR_ATTR, sourceDir);
-        if (excludesList != null) {
+        for(String exclude : excludesList) {
             Element excludeElement = new Element(AntUtils.BUILD_EXCLUDE_ELEMENT);
-            for(String exclude : excludesList) {
-                excludeElement.setAttribute(AntUtils.BUILD_EXCLUDE_NAME_ATTR, exclude);
-                fileset.addContent(excludeElement);
-            }
+            excludeElement.setAttribute(AntUtils.BUILD_EXCLUDE_NAME_ATTR, exclude);
+            fileset.addContent(excludeElement);
         }
         copy.addContent(fileset);
         target.addContent(mkdir);
