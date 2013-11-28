@@ -49,6 +49,10 @@ public abstract class BaseTemplate implements PropertyFileOperator {
         }
     }
 
+    public String getProjectHome() {
+        return this.outputFile.getParentFile().getAbsolutePath();
+    }
+
     protected void appendContentToBuildFile(Document buildFile, Element contentToAppend) {
         if (buildFile != null && contentToAppend != null)
             buildFile.getRootElement().addContent(contentToAppend);

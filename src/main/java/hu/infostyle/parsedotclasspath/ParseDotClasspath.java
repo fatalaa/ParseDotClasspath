@@ -1,5 +1,8 @@
 package hu.infostyle.parsedotclasspath;
 
+import hu.infostyle.parsedotclasspath.buildtemplate.AndroidApplicationBuildTemplate;
+import hu.infostyle.parsedotclasspath.buildtemplate.AndroidLibraryBuildTemplate;
+import hu.infostyle.parsedotclasspath.buildtemplate.BaseTemplate;
 import hu.infostyle.parsedotclasspath.buildtemplate.EjbBuildTemplate;
 import hu.infostyle.parsedotclasspath.eclipseutil.ClasspathUtil;
 import hu.infostyle.parsedotclasspath.eclipseutil.EclipseProjectType;
@@ -12,6 +15,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
 
@@ -63,7 +67,11 @@ public class ParseDotClasspath {
                     break;
                 }
                 case ANDROID: {
-                    break;
+                    //TODO Complete me
+                    /*String currentProject = projectDirectories.get(i);
+                    BaseTemplate template = isAndroidLibraryProject(currentProject) ?
+                            new AndroidLibraryBuildTemplate(environmentVariables, currentProject + File.separator + "gen_build.xml") :
+                            new AndroidApplicationBuildTemplate(environmentVariables, currentProject + File.separator + "gen_build.xml");*/
                 }
                 default:
                     templateSettings.clear();
@@ -130,5 +138,18 @@ public class ParseDotClasspath {
             }
         });
         parser.parse(dotClasspathFile.toURI().toURL().toString());
+    }
+
+    private static boolean isAndroidLibraryProject(String projectHome) {
+        Properties properties = new Properties();
+        try {
+            properties.load(new FileInputStream(projectHome + File.separator + "local.properties"));
+            Boolean isLibrary = new Boolean(properties.getProperty("android.library"));
+            if (isLibrary != null && isLibrary)
+                return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

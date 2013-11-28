@@ -17,12 +17,7 @@ import java.util.List;
 import java.util.Properties;
 
 public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExportable {
-    private static String androidHome;
-
-
-    public String getProjectHome() {
-        return this.outputFile.getParentFile().getAbsolutePath();
-    }
+    private String androidHome;
 
     public AndroidLibraryBuildTemplate(EnvironmentVariables environmentVariables, String outputFileWithPath) {
         super(outputFileWithPath);
@@ -33,10 +28,10 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
         throw new RuntimeException("ANDROID_HOME is not set in Eclipse");
     }
 
-    public boolean executeUpdateOnProject(int targetApiLevel) {
+    public boolean executeUpdateOnProject(int targetApiLevelId) {
         StringBuilder stringBuilder = new StringBuilder(androidHome);
-        stringBuilder.append("//tools//android.bat -v update lib-project -p ").append(getProjectHome())
-                .append(String.format(" -t %s", targetApiLevel));
+        stringBuilder.append("/tools/android -v update lib-project -p ").append(getProjectHome())
+                .append(String.format(" -t %s", targetApiLevelId));
         try {
             Process process = Runtime.getRuntime().exec(stringBuilder.toString());
             int exitValue = process.waitFor();
