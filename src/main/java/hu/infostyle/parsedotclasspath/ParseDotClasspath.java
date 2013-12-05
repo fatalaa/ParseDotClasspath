@@ -68,10 +68,14 @@ public class ParseDotClasspath {
                 }
                 case ANDROID: {
                     //TODO Complete me
-                    /*String currentProject = projectDirectories.get(i);
-                    BaseTemplate template = isAndroidLibraryProject(currentProject) ?
-                            new AndroidLibraryBuildTemplate(environmentVariables, currentProject + File.separator + "gen_build.xml") :
-                            new AndroidApplicationBuildTemplate(environmentVariables, currentProject + File.separator + "gen_build.xml");*/
+                    String currentProject = projectDirectories.get(i);
+                    if (isAndroidLibraryProject(currentProject)) {
+                        AndroidLibraryBuildTemplate template = new AndroidLibraryBuildTemplate(environmentVariables,
+                                                               currentProject + File.separator + "build.xml");
+                        template.export();
+                    }
+
+
                 }
                 default:
                     templateSettings.clear();

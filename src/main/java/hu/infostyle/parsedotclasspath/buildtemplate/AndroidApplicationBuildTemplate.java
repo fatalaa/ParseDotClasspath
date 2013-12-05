@@ -36,7 +36,6 @@ public class AndroidApplicationBuildTemplate extends BaseTemplate implements Ant
         }
     }
 
-
     @Override
     public void export() {
 
