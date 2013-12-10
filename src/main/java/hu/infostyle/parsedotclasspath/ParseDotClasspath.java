@@ -143,41 +143,6 @@ public class ParseDotClasspath {
             }
         };
         parser.setContentHandler(ejbHanlder);
-        DefaultHandler androidHandler = new DefaultHandler() {
-            public void startElement(String uri, String localname, String qname, Attributes atts) {
-                if (!localname.equals("classpathentry")) {
-                    return;
-                }
-                String cpEntryKind = atts.getValue("kind");
-                if (cpEntryKind != null && kinds.contains(cpEntryKind)) {
-                    String path = atts.getValue("path");
-                    if (cpEntryKind.equals("var")) {
-                        int i = path.indexOf("/");
-                        String dir = environmentVariables.getVariableByKey(path.substring(0, i));
-                        path = dir + File.separator + path.substring(i + 1);
-                        classpathBuilder.add(absolutizeFile(projectDirectory, path));
-                    } else if (cpEntryKind.equals("src")) {
-                        if (path.startsWith("/")) {
-                            String dependencyClasspathName = path.substring(1);
-                            classpathBuilder.add(makeAntVariableFromString(dependencyClasspathName));
-                        } else {
-                            templateSettings.put("src", path);
-                            String excludes = atts.getValue("excluding");
-                            if (excludes != null) {
-                                templateSettings.put("excludesList", Arrays.asList(excludes.split("\\|")));
-                            }
-                        }
-                    } else if (cpEntryKind.equals("output")) {
-                        templateSettings.put("classesDir", path);
-                        classpathBuilder.add(absolutizeFile(projectDirectory, path));
-                    } else if(cpEntryKind.equals("con")) {
-                        return;
-                    } else {
-                        classpathBuilder.add(absolutizeFile(projectDirectory, path));
-                    }
-                }
-            }
-        };
         parser.parse(dotClasspathFile.toURI().toURL().toString());
     }
 
