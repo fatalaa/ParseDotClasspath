@@ -17,22 +17,6 @@ public abstract class BaseTemplate implements PropertyFileOperator {
         this.buildFileContent = new Document();
     }
 
-    public Document getBuildFileContent() {
-        return buildFileContent;
-    }
-
-    public void setBuildFileContent(Document buildFileContent) {
-        this.buildFileContent = buildFileContent;
-    }
-
-    public File getOutputFilenameWithPath() {
-        return outputFile;
-    }
-
-    public void setOutputFilenameWithPath(File file) {
-        this.outputFile = file;
-    }
-
     @Override
     public void addPropertyElement(AntPropertyType propertyType, String propertyKey, String propertyValue) {
         if (!buildFileContent.hasRootElement())

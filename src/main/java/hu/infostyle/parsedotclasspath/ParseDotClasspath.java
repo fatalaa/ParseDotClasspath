@@ -72,10 +72,11 @@ public class ParseDotClasspath {
                     if (isAndroidLibraryProject(currentProject)) {
                         AndroidLibraryBuildTemplate template = new AndroidLibraryBuildTemplate(environmentVariables,
                                                                currentProject + File.separator + "build.xml");
-                        template.export();
+                        if (template.executeUpdateOnProject(1))
+                            break;
+                        template.addSpecificationToProject();
                     }
-
-
+                    break;
                 }
                 default:
                     templateSettings.clear();
@@ -107,7 +108,7 @@ public class ParseDotClasspath {
         SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
         saxParserFactory.setNamespaceAware(true);
         XMLReader parser = saxParserFactory.newSAXParser().getXMLReader();
-        parser.setContentHandler(new DefaultHandler() {
+        DefaultHandler ejbHanlder = new DefaultHandler() {
             public void startElement(String uri, String localname, String qname, Attributes atts) {
                 if (!localname.equals("classpathentry"))
                     return;
@@ -140,7 +141,43 @@ public class ParseDotClasspath {
                     }
                 }
             }
-        });
+        };
+        parser.setContentHandler(ejbHanlder);
+        DefaultHandler androidHandler = new DefaultHandler() {
+            public void startElement(String uri, String localname, String qname, Attributes atts) {
+                if (!localname.equals("classpathentry")) {
+                    return;
+                }
+                String cpEntryKind = atts.getValue("kind");
+                if (cpEntryKind != null && kinds.contains(cpEntryKind)) {
+                    String path = atts.getValue("path");
+                    if (cpEntryKind.equals("var")) {
+                        int i = path.indexOf("/");
+                        String dir = environmentVariables.getVariableByKey(path.substring(0, i));
+                        path = dir + File.separator + path.substring(i + 1);
+                        classpathBuilder.add(absolutizeFile(projectDirectory, path));
+                    } else if (cpEntryKind.equals("src")) {
+                        if (path.startsWith("/")) {
+                            String dependencyClasspathName = path.substring(1);
+                            classpathBuilder.add(makeAntVariableFromString(dependencyClasspathName));
+                        } else {
+                            templateSettings.put("src", path);
+                            String excludes = atts.getValue("excluding");
+                            if (excludes != null) {
+                                templateSettings.put("excludesList", Arrays.asList(excludes.split("\\|")));
+                            }
+                        }
+                    } else if (cpEntryKind.equals("output")) {
+                        templateSettings.put("classesDir", path);
+                        classpathBuilder.add(absolutizeFile(projectDirectory, path));
+                    } else if(cpEntryKind.equals("con")) {
+                        return;
+                    } else {
+                        classpathBuilder.add(absolutizeFile(projectDirectory, path));
+                    }
+                }
+            }
+        };
         parser.parse(dotClasspathFile.toURI().toURL().toString());
     }
 
@@ -155,5 +192,24 @@ public class ParseDotClasspath {
             e.printStackTrace();
         }
         return false;
+    }
+
+    private List<String> getAndroidDependencies(final File projectDirectory) {
+        Properties projectProperties = new Properties();
+        try {
+            projectProperties.load(new FileInputStream(projectDirectory.getAbsolutePath() + File.separator + "project.properties"));
+            ArrayList<String> androidDependencies = new ArrayList<String>();
+            Enumeration projectPropertiesKeys = projectProperties.keys();
+            while (projectPropertiesKeys.hasMoreElements()) {
+                String key = (String)projectPropertiesKeys.nextElement();
+                if (key.contains("android.library.reference")) {
+                    androidDependencies.add(projectProperties.getProperty(key));
+                }
+            }
+            return androidDependencies.size() > 0 ? androidDependencies : null;
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException(String.format("Can not get android dependencies for project: %s", projectDirectory.getName()));
+        }
     }
 }

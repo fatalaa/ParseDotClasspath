@@ -49,62 +49,32 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
 
     @Override
     public void export() {
-
-        if (executeUpdateOnProject(1)) {
-            List<String> dependencies = getDependencyProjects();
-            if (dependencies.size() > 0)
-                this.addSpecificationToProject();
-            StringWriter stringWriter = new StringWriter();
-            XMLOutputter xmlOutputter = new XMLOutputter(Format.getPrettyFormat());
-            try {
-                xmlOutputter.output(buildFileContent, stringWriter);
-                if (outputFile.exists()) {
-                    if (outputFile.delete()) {
-                        System.out.println(outputFile.getAbsoluteFile().getName() + " deleted");
-                    }
-                    else {
-                        System.out.println(outputFile.getAbsoluteFile().getName() + " not deleted");
-                    }
-                }
-                FileUtils.writeStringToFile(outputFile, stringWriter.toString(), true);
-            } catch (IOException exception) {
-                exception.printStackTrace();
-                throw new RuntimeException("Cannot export project");
-            }
-        }
-        throw new RuntimeException("Cannot export project");
-    }
-
-    private Properties openProjectPropertyFile() {
-        Properties properties = new Properties();
+        StringWriter stringWriter = new StringWriter();
+        XMLOutputter xmlOutputter = new XMLOutputter(Format.getPrettyFormat());
         try {
-            properties.load(new FileInputStream(getProjectHome() + File.separator + "project.properties"));
-            return properties;
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Can not open project.properties");
+            xmlOutputter.output(buildFileContent, stringWriter);
+            if (outputFile.exists()) {
+                if (outputFile.delete()) {
+                    System.out.println(outputFile.getAbsoluteFile().getName() + " deleted");
+                } else {
+                    System.out.println(outputFile.getAbsoluteFile().getName() + " not deleted");
+                }
+            }
+            FileUtils.writeStringToFile(outputFile, stringWriter.toString(), true);
+        } catch (IOException exception) {
+            exception.printStackTrace();
+            throw new RuntimeException("Cannot export project");
         }
     }
 
-    private List<String> getDependencyProjects() {
-        Properties properties = openProjectPropertyFile();
-        Enumeration keys = properties.keys();
-        List<String> references = new ArrayList<String>();
-        while(keys.hasMoreElements()) {
-            String key = (String)keys.nextElement();
-            if (key.startsWith("android.library.reference."))
-                references.add(properties.getProperty(key));
-        }
-        return references;
-    }
-
-    private void addSpecificationToProject() {
+    public void addSpecificationToProject() {
         Element rootElement = buildFileContent.getRootElement();
         Element globalPropertyElement = new Element("property").setAttribute("file", "../gen_global.properties");
         int idx = 0;
         for (int i = 0 ; i < buildFileContent.getRootElement().getChildren().size(); i++) {
             if (rootElement.getChildren().get(i).getAttributeValue("file").equals("local.properties")) {
                 rootElement.getChildren().add(i + 1, globalPropertyElement);
+                System.out.println("Global property element added");
                 idx = i + 1;
                 break;
             }
@@ -112,5 +82,6 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
         Element javaCompilerProperty = new Element("property").setAttribute("name", "java.compiler.classpath")
                 .setAttribute("value", "${" + getProjectHome() + ".classpath}");
         rootElement.getChildren().add(idx + 1, javaCompilerProperty);
+        this.appendContentToBuildFile(buildFileContent, rootElement);
     }
 }
