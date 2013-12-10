@@ -65,6 +65,32 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
             exception.printStackTrace();
             throw new RuntimeException("Cannot export project");
         }
+        } else {
+        	throw new RuntimeException("Cannot export project");
+        }
+    }
+
+    private Properties openProjectPropertyFile() {
+        Properties properties = new Properties();
+        try {
+            properties.load(new FileInputStream(getProjectHome() + File.separator + "project.properties"));
+            return properties;
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Can not open project.properties");
+        }
+    }
+
+    private List<String> getDependencyProjects() {
+        Properties properties = openProjectPropertyFile();
+        Enumeration keys = properties.keys();
+        List<String> references = new ArrayList<String>();
+        while(keys.hasMoreElements()) {
+            String key = (String)keys.nextElement();
+            if (key.startsWith("android.library.reference."))
+                references.add(properties.getProperty(key));
+        }
+        return references;
     }
 
     public void addSpecificationToProject() {

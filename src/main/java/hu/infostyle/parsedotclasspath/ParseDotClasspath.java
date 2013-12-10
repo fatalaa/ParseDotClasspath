@@ -184,7 +184,7 @@ public class ParseDotClasspath {
     private static boolean isAndroidLibraryProject(String projectHome) {
         Properties properties = new Properties();
         try {
-            properties.load(new FileInputStream(projectHome + File.separator + "local.properties"));
+            properties.load(new FileInputStream(projectHome + File.separator + "project.properties"));
             Boolean isLibrary = new Boolean(properties.getProperty("android.library"));
             if (isLibrary != null && isLibrary)
                 return true;
