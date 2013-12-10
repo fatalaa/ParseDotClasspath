@@ -26,8 +26,8 @@ public class EjbBuildTemplate extends BaseTemplate implements AntExportable {
         this.classpathVarMap = classpathVarMap;
     }
 
-    public EjbBuildTemplate(String outputFilenameWithPath) {
-        super(outputFilenameWithPath);
+    public EjbBuildTemplate(String workspaceRootDir, String outputFilenameWithPath) {
+        super(workspaceRootDir, outputFilenameWithPath);
         classpathVarMap = new HashMap<String, Object>();
     }
 
@@ -53,8 +53,8 @@ public class EjbBuildTemplate extends BaseTemplate implements AntExportable {
     }
 
     public void init() {
-        this.createBuildFileWithProjectElement();
-        this.addPropertyElement(AntPropertyType.FILE, null, "../gen_global.properties");
+		this.createBuildFileWithProjectElement();
+        this.addPropertyElement(AntPropertyType.FILE, null, workspaceRootDir+File.separator+"gen_global.properties");
         this.addPropertyElement(AntPropertyType.NAME, "debuglevel", "source,lines,vars");
         this.addPropertyElement(AntPropertyType.NAME, "target", "1.6");
         this.addPropertyElement(AntPropertyType.NAME, "source", "1.6");

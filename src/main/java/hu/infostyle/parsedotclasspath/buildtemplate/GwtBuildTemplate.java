@@ -10,8 +10,8 @@ import java.io.IOException;
 import java.io.StringWriter;
 
 public class GwtBuildTemplate extends EjbBuildTemplate {
-    public GwtBuildTemplate(String outputFilenameWithPath) {
-        super(outputFilenameWithPath);
+    public GwtBuildTemplate(String workspaceRootDir, String outputFilenameWithPath) {
+        super(workspaceRootDir, outputFilenameWithPath);
     }
 
     public void AddGwtCompileTarget(String classpathVariable, String gwtModuleName) {

@@ -19,8 +19,8 @@ import java.util.Properties;
 public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExportable {
     private String androidHome;
 
-    public AndroidLibraryBuildTemplate(EnvironmentVariables environmentVariables, String outputFileWithPath) {
-        super(outputFileWithPath);
+    public AndroidLibraryBuildTemplate(String workspaceRootDir, EnvironmentVariables environmentVariables, String outputFileWithPath) {
+        super(workspaceRootDir, outputFileWithPath);
         if (environmentVariables != null) {
             androidHome = environmentVariables.getVariableByKey("ANDROID_HOME");
             return;
@@ -30,7 +30,7 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
 
     public boolean executeUpdateOnProject(int targetApiLevelId) {
         StringBuilder stringBuilder = new StringBuilder(androidHome);
-        stringBuilder.append("/tools/android -v update lib-project -p ").append(getProjectHome())
+        stringBuilder.append("/tools/android.bat -v update lib-project -p ").append(getProjectHome())
                 .append(String.format(" -t %s", targetApiLevelId));
         try {
             Process process = Runtime.getRuntime().exec(stringBuilder.toString());

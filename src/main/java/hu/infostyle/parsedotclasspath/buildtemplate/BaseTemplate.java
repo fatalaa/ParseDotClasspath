@@ -11,9 +11,11 @@ import java.io.File;
 public abstract class BaseTemplate implements PropertyFileOperator {
     protected Document buildFileContent;
     protected File outputFile;
+	protected String workspaceRootDir;
 
-    protected BaseTemplate(String outputFilenameWithPath) {
+    protected BaseTemplate(String workspaceRootDir, String outputFilenameWithPath) {
         this.outputFile = new File(outputFilenameWithPath);
+		this.workspaceRootDir = workspaceRootDir;
         this.buildFileContent = new Document();
     }
 

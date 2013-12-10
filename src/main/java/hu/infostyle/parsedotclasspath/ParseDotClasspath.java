@@ -49,7 +49,7 @@ public class ParseDotClasspath {
             EclipseProjectType projectType = ClasspathUtil.getProjectType(projectDirectories.get(i));
             switch (projectType) {
                 case EJB: {
-                    EjbBuildTemplate ejbBuildTemplate = new EjbBuildTemplate(projectDirectories.get(i) + File.separator + "gen_build.xml");
+                    EjbBuildTemplate ejbBuildTemplate = new EjbBuildTemplate(args[0], projectDirectories.get(i) + File.separator + "gen_build.xml");
                     ejbBuildTemplate.init();
                     String classpathVariableName = new File(projectDirectories.get(i)).getName() + ".classpath";
                     ejbBuildTemplate.addClasspathElement(classpathVariableName);
@@ -70,7 +70,7 @@ public class ParseDotClasspath {
                     //TODO Complete me
                     String currentProject = projectDirectories.get(i);
                     if (isAndroidLibraryProject(currentProject)) {
-                        AndroidLibraryBuildTemplate template = new AndroidLibraryBuildTemplate(environmentVariables,
+                        AndroidLibraryBuildTemplate template = new AndroidLibraryBuildTemplate(args[0], environmentVariables,
                                                                currentProject + File.separator + "build.xml");
                         if (template.executeUpdateOnProject(1))
                             break;

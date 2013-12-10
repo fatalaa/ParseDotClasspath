@@ -8,8 +8,8 @@ import java.io.IOException;
 public class AndroidApplicationBuildTemplate extends BaseTemplate implements AntExportable {
     private String androidHome;
 
-    public AndroidApplicationBuildTemplate(EnvironmentVariables environmentVariables, String outputFileWithPath) {
-        super(outputFileWithPath);
+    public AndroidApplicationBuildTemplate(String workspaceRootDir, EnvironmentVariables environmentVariables, String outputFileWithPath) {
+        super(workspaceRootDir, outputFileWithPath);
         if (environmentVariables != null) {
             androidHome = environmentVariables.getVariableByKey("ANDROID_HOME");
             return;
@@ -19,7 +19,7 @@ public class AndroidApplicationBuildTemplate extends BaseTemplate implements Ant
 
     public boolean executeUpdateOnProject(int targetApiLevelId) {
         StringBuilder stringBuilder = new StringBuilder(androidHome);
-        stringBuilder.append("/tools/android -v update project -p ").append(getProjectHome())
+        stringBuilder.append("/tools/android.bat -v update project -p ").append(getProjectHome())
                 .append(String.format(" -t %s", targetApiLevelId));
         try {
             Process process = Runtime.getRuntime().exec(stringBuilder.toString());
