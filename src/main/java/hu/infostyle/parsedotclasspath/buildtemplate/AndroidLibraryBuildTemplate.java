@@ -4,6 +4,8 @@ import hu.infostyle.parsedotclasspath.antutil.AntExportable;
 import hu.infostyle.parsedotclasspath.eclipseutil.EnvironmentVariables;
 import org.apache.commons.io.FileUtils;
 import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
@@ -91,10 +93,19 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
     }
 
     public void addSpecificationToProject() {
+        if (!outputFile.delete() || !executeUpdateOnProject(1))
+            throw new RuntimeException("Can not update project");
+        try {
+            buildFileContent = new SAXBuilder().build(outputFile);
+        } catch (JDOMException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         Element rootElement = buildFileContent.getRootElement();
         Element globalPropertyElement = new Element("property").setAttribute("file", "../gen_global.properties");
         int idx = 0;
-        for (int i = 0 ; i < buildFileContent.getRootElement().getChildren().size(); i++) {
+        for (int i = 0 ; i < rootElement.getChildren().size(); i++) {
             if (rootElement.getChildren().get(i).getAttributeValue("file").equals("local.properties")) {
                 rootElement.getChildren().add(i + 1, globalPropertyElement);
                 System.out.println("Global property element added");
@@ -103,8 +114,7 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
             }
         }
         Element javaCompilerProperty = new Element("property").setAttribute("name", "java.compiler.classpath")
-                .setAttribute("value", "${" + getProjectHome() + ".classpath}");
+                .setAttribute("value", "${" + getProjectName() + ".classpath}");
         rootElement.getChildren().add(idx + 1, javaCompilerProperty);
-        this.appendContentToBuildFile(buildFileContent, rootElement);
     }
 }
