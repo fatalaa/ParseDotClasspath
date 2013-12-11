@@ -93,7 +93,7 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
     }
 
     public void addSpecificationToProject() {
-        if (!outputFile.delete() || !executeUpdateOnProject(1))
+        if (!outputFile.delete() || !executeUpdateOnProject(2))
             throw new RuntimeException("Can not update project");
         try {
             buildFileContent = new SAXBuilder().build(outputFile);
@@ -103,7 +103,7 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
             e.printStackTrace();
         }
         Element rootElement = buildFileContent.getRootElement();
-        Element globalPropertyElement = new Element("property").setAttribute("file", "../gen_global.properties");
+        Element globalPropertyElement = new Element("property").setAttribute("file", workspaceRootDir+File.separator+"/gen_global.properties");
         int idx = 0;
         for (int i = 0 ; i < rootElement.getChildren().size(); i++) {
             if (rootElement.getChildren().get(i).getAttributeValue("file").equals("local.properties")) {

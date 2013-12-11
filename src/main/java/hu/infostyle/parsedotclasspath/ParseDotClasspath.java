@@ -47,7 +47,7 @@ public class ParseDotClasspath {
 
             switch (projectType) {
                 case EJB: {
-                    EjbBuildTemplate ejbBuildTemplate = new EjbBuildTemplate(args[0], projectDirectories.get(i) + File.separator + "gen_build.xml");
+                    EjbBuildTemplate ejbBuildTemplate = new EjbBuildTemplate(args[0], projectDirectories.get(i) + File.separator + "build.xml");
                     ejbBuildTemplate.init();
                     String classpathVariableName = new File(projectDirectories.get(i)).getName() + ".classpath";
                     ejbBuildTemplate.addClasspathElement(classpathVariableName);
@@ -210,7 +210,7 @@ public class ParseDotClasspath {
             List<String> dependencies = getAndroidDependencies(projectDirectory);
             if (dependencies != null) {
                 for(String dependency : dependencies) {
-                    classpathBuilder.add(makeAntVariableFromString(dependency.substring(dependency.indexOf("/") + 1)));
+                    classpathBuilder.add(makeAntVariableFromString(dependency.substring(dependency.lastIndexOf("/") + 1)));
                 }
                 String androidJarPath = environmentVariables.getVariableByKey("ANDROID_HOME") + File.separator + "platforms" + File.separator + "android-8" + File.separator + "android.jar";
                 classpathBuilder.add(new File(androidJarPath));
