@@ -103,7 +103,7 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
             e.printStackTrace();
         }
         Element rootElement = buildFileContent.getRootElement();
-        Element globalPropertyElement = new Element("property").setAttribute("file", workspaceRootDir+File.separator+"/gen_global.properties");
+        Element globalPropertyElement = new Element("property").setAttribute("file", workspaceRootDir+"/gen_global.properties");
         int idx = 0;
         for (int i = 0 ; i < rootElement.getChildren().size(); i++) {
             if (rootElement.getChildren().get(i).getAttributeValue("file").equals("local.properties")) {
