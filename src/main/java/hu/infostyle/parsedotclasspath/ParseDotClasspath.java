@@ -83,7 +83,7 @@ public class ParseDotClasspath {
                     else {
                         AndroidApplicationBuildTemplate template = new AndroidApplicationBuildTemplate(args[0], environmentVariables,
                                                                    currentProject + File.separator + "build.xml");
-
+                        template.addSpecificationToProject();
                     }
                     refProjects.clear();
                     break;

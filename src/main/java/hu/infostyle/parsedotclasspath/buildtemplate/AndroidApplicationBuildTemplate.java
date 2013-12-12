@@ -2,6 +2,7 @@ package hu.infostyle.parsedotclasspath.buildtemplate;
 
 import hu.infostyle.parsedotclasspath.antutil.AntExportable;
 import hu.infostyle.parsedotclasspath.eclipseutil.EnvironmentVariables;
+import hu.infostyle.parsedotclasspath.propertyfileutil.PropertyUtil;
 import org.apache.commons.io.FileUtils;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
@@ -15,6 +16,17 @@ public class AndroidApplicationBuildTemplate extends AndroidLibraryBuildTemplate
         super(workspaceRootDir, environmentVariables, outputFileWithPath);
     }
 
+    @Override
+    public void addSpecificationToProject() {
+        super.addSpecificationToProject();
+        String keystorePath = PropertyUtil.getValueForKey(getProjectHome() + "/" + "ant.properties", "key.store");
+        if (keystorePath != null) {
+            //TODO
+            //Complete me
+        }
+    }
+
+    @Override
     public boolean executeUpdateOnProject(int targetApiLevelId) {
         StringBuilder stringBuilder = new StringBuilder(androidHome);
         stringBuilder.append("/tools/android.bat -v update project -p ").append(getProjectHome())

@@ -12,8 +12,11 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Properties;
 
 public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExportable {
     protected String androidHome;
@@ -135,9 +138,7 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
         try {
             Process process = Runtime.getRuntime().exec(stringBuilder.toString());
             int exitValue = process.waitFor();
-            if (exitValue == 0 )
-                return true;
-            return false;
+            return exitValue == 0;
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(String.format("Cannot execute %s command", stringBuilder.toString()));
