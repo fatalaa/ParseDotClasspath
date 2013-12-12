@@ -171,7 +171,7 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
         if (!outputFile.exists() && !outputFile.delete())
             throw new RuntimeException("Can not delete existing buildfile");
         try {
-            initBuildFileContent();
+            createBuildFileWithProjectElement();
             export();
             buildFileContent = new SAXBuilder().build(outputFile);
         } catch (JDOMException e) {
@@ -193,10 +193,5 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
         Element javaCompilerProperty = new Element("property").setAttribute("name", "java.compiler.classpath")
                 .setAttribute("value", "${" + getProjectName() + ".classpath}");
         rootElement.getChildren().add(idx + 1, javaCompilerProperty);
-    }
-
-    private void initBuildFileContent() {
-        createBuildFileWithProjectElement();
-
     }
 }
