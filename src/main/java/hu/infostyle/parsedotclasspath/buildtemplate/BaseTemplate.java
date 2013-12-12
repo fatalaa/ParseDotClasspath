@@ -4,6 +4,7 @@ import hu.infostyle.parsedotclasspath.antutil.AntPropertyType;
 import hu.infostyle.parsedotclasspath.antutil.AntUtils;
 import hu.infostyle.parsedotclasspath.antutil.PropertyFileOperator;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.jdom2.Content;
 import org.jdom2.Document;
 import org.jdom2.Element;
 
@@ -19,6 +20,14 @@ public abstract class BaseTemplate implements PropertyFileOperator {
         this.outputFile = new File(outputFilenameWithPath);
 		this.workspaceRootDir = workspaceRootDir;
         this.buildFileContent = new Document();
+    }
+
+    public void createBuildFileWithProjectElement() {
+        Element projectElement = new Element(AntUtils.BUILD_PROJECT_ELEMENT);
+        projectElement.setAttribute(AntUtils.BUILD_PROJECT_NAME_ATTR, outputFile.getParentFile().getName());
+        projectElement.setAttribute(AntUtils.BUILD_PROJECT_DEF_ATTR, "build-project");
+        projectElement.setAttribute(AntUtils.BUILD_PROJECT_BASEDIR_ATTR, ".");
+        buildFileContent.setRootElement(projectElement);
     }
 
     @Override
@@ -73,7 +82,7 @@ public abstract class BaseTemplate implements PropertyFileOperator {
         return this.outputFile.getParentFile().getName();
     }
 
-    protected void appendContentToBuildFile(Document buildFile, Element contentToAppend) {
+    protected void appendContentToBuildFile(Document buildFile, Content contentToAppend) {
         if (buildFile != null && contentToAppend != null)
             buildFile.getRootElement().addContent(contentToAppend);
         else

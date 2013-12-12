@@ -1,22 +1,19 @@
 package hu.infostyle.parsedotclasspath.buildtemplate;
 
 import hu.infostyle.parsedotclasspath.antutil.AntExportable;
+import hu.infostyle.parsedotclasspath.antutil.AntPropertyType;
 import hu.infostyle.parsedotclasspath.eclipseutil.EnvironmentVariables;
 import org.apache.commons.io.FileUtils;
+import org.jdom2.Comment;
+import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Properties;
 
 public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExportable {
     protected String androidHome;
@@ -28,6 +25,107 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
             return;
         }
         throw new RuntimeException("ANDROID_HOME is not set in Eclipse");
+    }
+
+    @Override
+    public void createBuildFileWithProjectElement() {
+        buildFileContent = new Document();
+        Element element = new Element("project");
+        element.setAttribute("name", outputFile.getParentFile().getName());
+        element.setAttribute("default", "help");
+        buildFileContent.setRootElement(element);
+
+        String comment = "The local.properties file is created and updated by the 'android' tool." +
+                         "It contains the path to the SDK. It should *NOT* be checked into" +
+                         "Version Control Systems.";
+        Comment commentElement = new Comment(comment);
+        appendContentToBuildFile(buildFileContent, commentElement);
+
+        addPropertyElement(AntPropertyType.FILE, null, "local.properties");
+
+        comment = "The ant.properties file can be created by you. It is only edited by the\n" +
+                  "\t'android' tool to add properties to it.\n" +
+                  "\tThis is the place to change some Ant specific build properties.\n" +
+                  "\tHere are some properties you may want to change/update:\n" +
+                  "\n\tsource.dir\n" +
+                  "\tThe name of the source directory. Default is 'src'.\n" +
+                  "\n\tout.dir\n" +
+                  "\tThe name of the output directory. Default is 'bin'.\n" +
+                  "\n\tFor other overridable properties, look at the beginning of the rules\n" +
+                  "\tfiles in the SDK, at tools/ant/build.xml\n" +
+                  "\n\tProperties related to the SDK location or the project target should\n" +
+                  "\tbe updated using the 'android' tool with the 'update' action.\n" +
+                  "\n\tThis file is an integral part of the build system for your\n" +
+                  "\tapplication and should be checked into Version Control Systems.";
+        appendContentToBuildFile(buildFileContent, new Comment(comment));
+
+        addPropertyElement(AntPropertyType.FILE, null, "ant.properties");
+
+        comment = "if sdk.dir was not set from one of the property file, then\n" +
+                "\t\tget it from the ANDROID_HOME env var.\n" +
+                "\t\tThis must be done before we load project.properties since\n" +
+                "\t\tthe proguard config can use sdk.dir";
+        appendContentToBuildFile(buildFileContent, new Comment(comment));
+
+        appendContentToBuildFile(buildFileContent, new Element("property").setAttribute("environment", "env"));
+
+        Element condition = new Element("condidtion").setAttribute("property", "sdk.dir").setAttribute("value", "${env.ANDROID_HOME}");
+        Element isset = new Element("isset").setAttribute("property", "env.ANDROID_HOME");
+        condition.addContent(isset);
+        appendContentToBuildFile(buildFileContent, condition);
+
+        comment = "The project.properties file is created and updated by the 'android'\n" +
+                  "\ttool, as well as ADT.\n" +
+                  "\n\tThis contains project specific properties such as project target, and library\n" +
+                  "\tdependencies. Lower level build properties are stored in ant.properties\n" +
+                  "\t(or in .classpath for Eclipse projects).\n" +
+                  "\n\tThis file is an integral part of the build system for your\n" +
+                  "\tapplication and should be checked into Version Control Systems.";
+        appendContentToBuildFile(buildFileContent, new Comment(comment));
+
+        appendContentToBuildFile(buildFileContent, new Element("loadproperties").setAttribute("srcFile", "project.properties"));
+
+        appendContentToBuildFile(buildFileContent, new Comment("quick check on sdk.dir"));
+
+        comment = "sdk.dir is missing. Make sure to generate local.properties using 'android update project' or to inject it through the ANDROID_HOME environment variable.";
+        appendContentToBuildFile(buildFileContent, new Element("fail").setAttribute("message", comment).setAttribute("unless", "sdk.dir"));
+
+        comment = "Import per project custom build rules if present at the root of the project.\n" +
+                "        This is the place to put custom intermediary targets such as:\n" +
+                "            -pre-build\n" +
+                "            -pre-compile\n" +
+                "            -post-compile (This is typically used for code obfuscation.\n" +
+                "                           Compiled code location: ${out.classes.absolute.dir}\n" +
+                "                           If this is not done in place, override ${out.dex.input.absolute.dir})\n" +
+                "            -post-package\n" +
+                "            -post-build\n" +
+                "            -pre-clean";
+        appendContentToBuildFile(buildFileContent, new Comment(comment));
+
+        appendContentToBuildFile(buildFileContent, new Element("import").setAttribute("file", "custom_rules.xml").setAttribute("optional", "true"));
+
+        comment = "Import the actual build file.\n" +
+                "\n" +
+                "         To customize existing targets, there are two options:\n" +
+                "         - Customize only one target:\n" +
+                "             - copy/paste the target into this file, *before* the\n" +
+                "               <import> task.\n" +
+                "             - customize it to your needs.\n" +
+                "         - Customize the whole content of build.xml\n" +
+                "             - copy/paste the content of the rules files (minus the top node)\n" +
+                "               into this file, replacing the <import> task.\n" +
+                "             - customize to your needs.\n" +
+                "\n" +
+                "         ***********************\n" +
+                "         ****** IMPORTANT ******\n" +
+                "         ***********************\n" +
+                "         In all cases you must update the value of version-tag below to read 'custom' instead of an integer,\n" +
+                "         in order to avoid having your file be overridden by tools such as \"android update project\"";
+        appendContentToBuildFile(buildFileContent, new Comment(comment));
+
+        appendContentToBuildFile(buildFileContent, new Comment("version-tag: 1"));
+
+        appendContentToBuildFile(buildFileContent, new Element("import").setAttribute("file", "${sdk.dir}/tools/ant/build.xml"));
     }
 
     public boolean executeUpdateOnProject(int targetApiLevelId) {
@@ -69,33 +167,12 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
         }
     }
 
-    protected Properties openProjectPropertyFile() {
-        Properties properties = new Properties();
-        try {
-            properties.load(new FileInputStream(getProjectHome() + File.separator + "project.properties"));
-            return properties;
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Can not open project.properties");
-        }
-    }
-
-    private List<String> getDependencyProjects() {
-        Properties properties = openProjectPropertyFile();
-        Enumeration keys = properties.keys();
-        List<String> references = new ArrayList<String>();
-        while(keys.hasMoreElements()) {
-            String key = (String)keys.nextElement();
-            if (key.startsWith("android.library.reference."))
-                references.add(properties.getProperty(key));
-        }
-        return references;
-    }
-
     public void addSpecificationToProject() {
         if (!outputFile.exists() && !outputFile.delete())
             throw new RuntimeException("Can not delete existing buildfile");
         try {
+            initBuildFileContent();
+            export();
             buildFileContent = new SAXBuilder().build(outputFile);
         } catch (JDOMException e) {
             e.printStackTrace();
@@ -103,7 +180,7 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
             e.printStackTrace();
         }
         Element rootElement = buildFileContent.getRootElement();
-        Element globalPropertyElement = new Element("property").setAttribute("file", workspaceRootDir+"/gen_global.properties");
+        Element globalPropertyElement = new Element("property").setAttribute("file", workspaceRootDir + "/gen_global.properties");
         int idx = 0;
         for (int i = 0 ; i < rootElement.getChildren().size(); i++) {
             if (rootElement.getChildren().get(i).getAttributeValue("file").equals("local.properties")) {
@@ -116,5 +193,10 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
         Element javaCompilerProperty = new Element("property").setAttribute("name", "java.compiler.classpath")
                 .setAttribute("value", "${" + getProjectName() + ".classpath}");
         rootElement.getChildren().add(idx + 1, javaCompilerProperty);
+    }
+
+    private void initBuildFileContent() {
+        createBuildFileWithProjectElement();
+
     }
 }

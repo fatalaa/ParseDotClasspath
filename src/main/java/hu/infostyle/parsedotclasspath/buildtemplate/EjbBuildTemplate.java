@@ -61,14 +61,6 @@ public class EjbBuildTemplate extends BaseTemplate implements AntExportable {
         this.addPropertyElement(AntPropertyType.NAME, "encoding", "UTF-8");
     }
 
-    public void createBuildFileWithProjectElement() {
-        Element projectElement = new Element(AntUtils.BUILD_PROJECT_ELEMENT);
-        projectElement.setAttribute(AntUtils.BUILD_PROJECT_NAME_ATTR, outputFile.getParentFile().getName());
-        projectElement.setAttribute(AntUtils.BUILD_PROJECT_DEF_ATTR, "build-project");
-        projectElement.setAttribute(AntUtils.BUILD_PROJECT_BASEDIR_ATTR, ".");
-        buildFileContent.setRootElement(projectElement);
-    }
-
     public void addClasspathElement(String projectDirectory) {
         String classpathVariableName = new File(projectDirectory).getName();
         Element classpath = new Element(AntUtils.BUILD_PATH_ELEMENT);
