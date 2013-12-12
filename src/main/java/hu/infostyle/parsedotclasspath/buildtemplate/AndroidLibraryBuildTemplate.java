@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Properties;
 
 public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExportable {
-    private String androidHome;
+    protected String androidHome;
 
     public AndroidLibraryBuildTemplate(String workspaceRootDir, EnvironmentVariables environmentVariables, String outputFileWithPath) {
         super(workspaceRootDir, outputFileWithPath);
@@ -69,7 +69,7 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
         }
     }
 
-    private Properties openProjectPropertyFile() {
+    protected Properties openProjectPropertyFile() {
         Properties properties = new Properties();
         try {
             properties.load(new FileInputStream(getProjectHome() + File.separator + "project.properties"));
@@ -93,8 +93,8 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
     }
 
     public void addSpecificationToProject() {
-        if (!outputFile.delete() || !executeUpdateOnProject(2))
-            throw new RuntimeException("Can not update project");
+        if (!outputFile.exists() && !outputFile.delete())
+            throw new RuntimeException("Can not delete existing buildfile");
         try {
             buildFileContent = new SAXBuilder().build(outputFile);
         } catch (JDOMException e) {

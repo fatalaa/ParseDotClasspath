@@ -2,19 +2,17 @@ package hu.infostyle.parsedotclasspath.buildtemplate;
 
 import hu.infostyle.parsedotclasspath.antutil.AntExportable;
 import hu.infostyle.parsedotclasspath.eclipseutil.EnvironmentVariables;
+import org.apache.commons.io.FileUtils;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 
 import java.io.IOException;
+import java.io.StringWriter;
 
-public class AndroidApplicationBuildTemplate extends BaseTemplate implements AntExportable {
-    private String androidHome;
+public class AndroidApplicationBuildTemplate extends AndroidLibraryBuildTemplate implements AntExportable {
 
     public AndroidApplicationBuildTemplate(String workspaceRootDir, EnvironmentVariables environmentVariables, String outputFileWithPath) {
-        super(workspaceRootDir, outputFileWithPath);
-        if (environmentVariables != null) {
-            androidHome = environmentVariables.getVariableByKey("ANDROID_HOME");
-            return;
-        }
-        throw new RuntimeException("ANDROID_HOME is not set in Eclipse");
+        super(workspaceRootDir, environmentVariables, outputFileWithPath);
     }
 
     public boolean executeUpdateOnProject(int targetApiLevelId) {
@@ -38,6 +36,21 @@ public class AndroidApplicationBuildTemplate extends BaseTemplate implements Ant
 
     @Override
     public void export() {
-
+        StringWriter stringWriter = new StringWriter();
+        XMLOutputter xmlOutputter = new XMLOutputter(Format.getPrettyFormat());
+        try {
+            xmlOutputter.output(buildFileContent, stringWriter);
+            if (outputFile.exists()) {
+                if (outputFile.delete()) {
+                    System.out.println(outputFile.getAbsoluteFile().getName() + " deleted");
+                } else {
+                    System.out.println(outputFile.getAbsoluteFile().getName() + " not deleted");
+                }
+            }
+            FileUtils.writeStringToFile(outputFile, stringWriter.toString(), true);
+        } catch (IOException exception) {
+            exception.printStackTrace();
+            throw new RuntimeException("Cannot export project");
+        }
     }
 }

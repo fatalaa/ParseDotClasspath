@@ -1,5 +1,6 @@
 package hu.infostyle.parsedotclasspath;
 
+import hu.infostyle.parsedotclasspath.buildtemplate.AndroidApplicationBuildTemplate;
 import hu.infostyle.parsedotclasspath.buildtemplate.AndroidLibraryBuildTemplate;
 import hu.infostyle.parsedotclasspath.buildtemplate.EjbBuildTemplate;
 import hu.infostyle.parsedotclasspath.eclipseutil.ClasspathUtil;
@@ -9,6 +10,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
@@ -23,13 +25,15 @@ public class ParseDotClasspath {
     private static PropertyExporter propertyExporter;
     private static Set<String> kinds = new HashSet<String>(Arrays.asList(new String[]{"lib", "output", "src", "var"}));
     private static StringBuffer stringBuffer;
+    private static List<ImmutablePair<String, String>> refProjects = new ArrayList<ImmutablePair<String, String>>();
+    private static List<String> projectDirectories = new ArrayList<String>();
 
     public static void main(String[] args) throws IOException, SAXException, ParserConfigurationException {
         //The first argument must be the Eclispse workspace's absolute path
         environmentVariables = new EnvironmentVariables(args[0]);
         templateSettings = new HashMap<String, Object>();
         propertyExporter = new PropertyExporter();
-        List<String> projectDirectories = new ArrayList<String>();
+
 
         for (int i = 1; i < args.length; i++) {
             projectDirectories.add(args[i].intern());
@@ -56,12 +60,15 @@ public class ParseDotClasspath {
                     ejbBuildTemplate.addBuildProjectTarget(true, (String)templateSettings.get("classesDir"),
                                                           (String)templateSettings.get("src"),
                                                            classpathVariableName);
+                    if (refProjects.size() > 0)
+                        ejbBuildTemplate.addBuildAllTarget(refProjects);
                     List<String> dirsToDelete = new ArrayList<String>();
                     dirsToDelete.add((String)templateSettings.get("classesDir"));
                     ejbBuildTemplate.addCleanTarget(dirsToDelete);
                     ejbBuildTemplate.addCleanAllTarget();
                     ejbBuildTemplate.export();
                     templateSettings.clear();
+                    refProjects.clear();
                     break;
                 }
                 case ANDROID: {
@@ -73,10 +80,16 @@ public class ParseDotClasspath {
                         template.addSpecificationToProject();
                         template.export();
                     }
+                    else {
+                        AndroidApplicationBuildTemplate template = new AndroidApplicationBuildTemplate(args[0], environmentVariables,
+                                                                   currentProject + File.separator + "build.xml");
+                    }
+                    refProjects.clear();
                     break;
                 }
                 default:
                     templateSettings.clear();
+                    refProjects.clear();
                     break;
             }
             propertyExporter.addPath(projectDirectories.get(i));
@@ -152,6 +165,14 @@ public class ParseDotClasspath {
         }
     }
 
+    private static String getRefProjectDirectory(String projectName, List<String> projectPaths) {
+        for(int i = 0; i < projectPaths.size(); i++) {
+            if (projectPaths.get(i).contains(projectName))
+                return projectPaths.get(i);
+        }
+        return null;
+    }
+
     private static class EjbHandler extends DefaultHandler {
         protected File projectDirectory;
         protected ClasspathBuilder classpathBuilder;
@@ -177,6 +198,7 @@ public class ParseDotClasspath {
                     if (path.startsWith("/")) {
                         String dependencyClasspathName = path.substring(1);
                         classpathBuilder.add(makeAntVariableFromString(dependencyClasspathName));
+                        refProjects.add(new ImmutablePair<String, String>(dependencyClasspathName, getRefProjectDirectory(dependencyClasspathName, projectDirectories)));
                     } else {
                         templateSettings.put("src", path);
                         String excludes = attributes.getValue("excluding");
@@ -221,7 +243,36 @@ public class ParseDotClasspath {
 
         @Override
         public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-            super.startElement(uri, localName, qName, attributes);
+            if (!localName.equals("classpathentry"))
+                return;
+            String cpEntryKind = attributes.getValue("kind");
+            if (cpEntryKind != null && kinds.contains(cpEntryKind)) {
+                String path = attributes.getValue("path");
+                if (cpEntryKind.equals("var")) {
+                    int i = path.indexOf("/");
+                    String dir = environmentVariables.getVariableByKey(path.substring(0, i));
+                    path = dir + File.separator + path.substring(i + 1);
+                    classpathBuilder.add(absolutizeFile(projectDirectory, path));
+                } else if (cpEntryKind.equals("src")) {
+                    if (path.startsWith("/")) {
+                        String dependencyClasspathName = path.substring(1);
+                        refProjects.add(new ImmutablePair<String, String>(dependencyClasspathName, projectDirectory.getAbsolutePath()));
+                    } else {
+                        templateSettings.put("src", path);
+                        String excludes = attributes.getValue("excluding");
+                        if (excludes != null) {
+                            templateSettings.put("excludesList", Arrays.asList(excludes.split("\\|")));
+                        }
+                    }
+                } else if (cpEntryKind.equals("output")) {
+                    templateSettings.put("classesDir", path);
+                    classpathBuilder.add(absolutizeFile(projectDirectory, path));
+                } else if(cpEntryKind.equals("con")) {
+                    return;
+                } else {
+                    classpathBuilder.add(absolutizeFile(projectDirectory, path));
+                }
+            }
         }
     }
 }
