@@ -6,11 +6,19 @@ import hu.infostyle.parsedotclasspath.buildtemplate.EjbBuildTemplate;
 import hu.infostyle.parsedotclasspath.eclipseutil.ClasspathUtil;
 import hu.infostyle.parsedotclasspath.eclipseutil.EclipseProjectType;
 import hu.infostyle.parsedotclasspath.eclipseutil.EnvironmentVariables;
+import org.javatuples.Triplet;
+import org.jdom2.Attribute;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.filter.Filters;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.xpath.XPathExpression;
+import org.jdom2.xpath.XPathFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
@@ -25,7 +33,7 @@ public class ParseDotClasspath {
     private static PropertyExporter propertyExporter;
     private static Set<String> kinds = new HashSet<String>(Arrays.asList(new String[]{"lib", "output", "src", "var"}));
     private static StringBuffer stringBuffer;
-    private static List<ImmutablePair<String, String>> refProjects = new ArrayList<ImmutablePair<String, String>>();
+    private static List<Triplet<String, String, String>> refProjects = new ArrayList<Triplet<String, String, String>>();
     private static List<String> projectDirectories = new ArrayList<String>();
 
     public static void main(String[] args) throws IOException, SAXException, ParserConfigurationException {
@@ -46,7 +54,7 @@ public class ParseDotClasspath {
             ClasspathBuilder classpathBuilder = new ClasspathBuilder();
             EclipseProjectType projectType = ClasspathUtil.getProjectType(projectDirectories.get(i));
             parseDotClasspath(dotClasspathFile, classpathBuilder, projectType);
-            stringBuffer.append(dotClasspathFile.getParentFile().getName() + ".classpath=" + classpathBuilder.getResult());
+            stringBuffer.append(dotClasspathFile.getParentFile().getName()).append(".classpath=").append(classpathBuilder.getResult());
 
 
             switch (projectType) {
@@ -62,6 +70,7 @@ public class ParseDotClasspath {
                                                            classpathVariableName);
                     if (refProjects.size() > 0)
                         ejbBuildTemplate.addBuildAllTarget(refProjects);
+                    ejbBuildTemplate.addJarTarget((String)templateSettings.get("classesDir"), new File(projectDirectories.get(i)).getName() + ".jar");
                     List<String> dirsToDelete = new ArrayList<String>();
                     dirsToDelete.add((String)templateSettings.get("classesDir"));
                     ejbBuildTemplate.addCleanTarget(dirsToDelete);
@@ -76,14 +85,15 @@ public class ParseDotClasspath {
                     String currentProject = projectDirectories.get(i);
                     if (isAndroidLibraryProject(currentProject)) {
                         AndroidLibraryBuildTemplate template = new AndroidLibraryBuildTemplate(args[0], environmentVariables,
-                                                               currentProject + File.separator + "build.xml");
+                                                               currentProject + File.separator + "build.xml", refProjects);
                         template.addSpecificationToProject();
                         template.export();
                     }
                     else {
                         AndroidApplicationBuildTemplate template = new AndroidApplicationBuildTemplate(args[0], environmentVariables,
-                                                                   currentProject + File.separator + "build.xml");
+                                                                   currentProject + File.separator + "build.xml", refProjects);
                         template.addSpecificationToProject();
+                        template.export();
                     }
                     refProjects.clear();
                     break;
@@ -111,7 +121,7 @@ public class ParseDotClasspath {
     }
 
     private static String makeAntVariableFromString(String variable) {
-        return new StringBuilder("${").append(variable).append(".classpath}").toString();
+        return "${" + variable + ".classpath}";
     }
 
     private static void parseDotClasspath(File dotClasspathFile, final ClasspathBuilder classpathBuilder, EclipseProjectType projectType)
@@ -139,7 +149,7 @@ public class ParseDotClasspath {
         try {
             properties.load(new FileInputStream(projectDirectory + File.separator + "project.properties"));
             Boolean isLibrary = new Boolean(properties.getProperty("android.library"));
-            if (isLibrary != null && isLibrary)
+            if (isLibrary)
                 return true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -167,9 +177,9 @@ public class ParseDotClasspath {
     }
 
     private static String getRefProjectDirectory(String projectName, List<String> projectPaths) {
-        for(int i = 0; i < projectPaths.size(); i++) {
-            if (projectPaths.get(i).contains(projectName))
-                return projectPaths.get(i);
+        for (String projectPath : projectPaths) {
+            if (projectPath.contains(projectName))
+                return projectPath;
         }
         return null;
     }
@@ -199,7 +209,7 @@ public class ParseDotClasspath {
                     if (path.startsWith("/")) {
                         String dependencyClasspathName = path.substring(1);
                         classpathBuilder.add(makeAntVariableFromString(dependencyClasspathName));
-                        refProjects.add(new ImmutablePair<String, String>(dependencyClasspathName, getRefProjectDirectory(dependencyClasspathName, projectDirectories)));
+                        refProjects.add(new Triplet<String, String, String>(dependencyClasspathName, getRefProjectDirectory(dependencyClasspathName, projectDirectories), getRefProjectClassesDir(projectDirectory.getAbsolutePath())));
                     } else {
                         templateSettings.put("src", path);
                         String excludes = attributes.getValue("excluding");
@@ -211,11 +221,27 @@ public class ParseDotClasspath {
                     templateSettings.put("classesDir", path);
                     classpathBuilder.add(absolutizeFile(projectDirectory, path));
                 } else if(cpEntryKind.equals("con")) {
-                    return;
                 } else {
                     classpathBuilder.add(absolutizeFile(projectDirectory, path));
                 }
             }
+        }
+
+        protected String getRefProjectClassesDir(String refProjectPath) {
+            SAXBuilder saxBuilder = new SAXBuilder();
+            try {
+                Document document = saxBuilder.build(new File(refProjectPath + "/" + "build.xml"));
+                XPathFactory xPathFactory = XPathFactory.instance();
+                XPathExpression expression = xPathFactory.compile("//javac/@destdir", Filters.attribute());
+                for (Attribute attribute : (List<Attribute>)expression.evaluate(document)) {
+                    System.out.println(attribute.getValue());
+                }
+            } catch (JDOMException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
         }
     }
 
@@ -258,7 +284,7 @@ public class ParseDotClasspath {
                     if (path.startsWith("/")) {
                         String dependencyClasspathName = path.substring(1);
                         classpathBuilder.add(makeAntVariableFromString(dependencyClasspathName));
-                        refProjects.add(new ImmutablePair<String, String>(dependencyClasspathName, projectDirectory.getAbsolutePath()));
+                        refProjects.add(new Triplet<String, String, String>(dependencyClasspathName, getRefProjectDirectory(dependencyClasspathName, projectDirectories), getRefProjectClassesDir(projectDirectory.getAbsolutePath())));
                     } else {
                         templateSettings.put("src", path);
                         String excludes = attributes.getValue("excluding");
@@ -270,7 +296,6 @@ public class ParseDotClasspath {
                     templateSettings.put("classesDir", path);
                     classpathBuilder.add(absolutizeFile(projectDirectory, path));
                 } else if(cpEntryKind.equals("con")) {
-                    return;
                 } else {
                     classpathBuilder.add(absolutizeFile(projectDirectory, path));
                 }

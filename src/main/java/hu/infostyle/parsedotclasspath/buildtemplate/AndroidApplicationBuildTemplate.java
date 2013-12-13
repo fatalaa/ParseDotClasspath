@@ -4,16 +4,19 @@ import hu.infostyle.parsedotclasspath.antutil.AntExportable;
 import hu.infostyle.parsedotclasspath.eclipseutil.EnvironmentVariables;
 import hu.infostyle.parsedotclasspath.propertyfileutil.PropertyUtil;
 import org.apache.commons.io.FileUtils;
+import org.javatuples.Triplet;
+import org.jdom2.Element;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.List;
 
 public class AndroidApplicationBuildTemplate extends AndroidLibraryBuildTemplate implements AntExportable {
 
-    public AndroidApplicationBuildTemplate(String workspaceRootDir, EnvironmentVariables environmentVariables, String outputFileWithPath) {
-        super(workspaceRootDir, environmentVariables, outputFileWithPath);
+    public AndroidApplicationBuildTemplate(String workspaceRootDir, EnvironmentVariables environmentVariables, String outputFileWithPath, List<Triplet<String, String, String>> refProjects) {
+        super(workspaceRootDir, environmentVariables, outputFileWithPath, refProjects);
     }
 
     @Override
@@ -21,8 +24,8 @@ public class AndroidApplicationBuildTemplate extends AndroidLibraryBuildTemplate
         super.addSpecificationToProject();
         String keystorePath = PropertyUtil.getValueForKey(getProjectHome() + "/" + "ant.properties", "key.store");
         if (keystorePath != null) {
-            //TODO
-            //Complete me
+            int idx = buildFileContent.indexOf(new Element("property").setAttribute("file", "ant.properties"));
+            buildFileContent.getRootElement().addContent(idx + 1, new Element("property").setAttribute("name", "has.keystore").setAttribute("value", "1"));
         }
     }
 
@@ -43,26 +46,6 @@ public class AndroidApplicationBuildTemplate extends AndroidLibraryBuildTemplate
         } catch (InterruptedException exception) {
             exception.printStackTrace();
             throw new RuntimeException(String.format("Cannot execute %s command", stringBuilder.toString()));
-        }
-    }
-
-    @Override
-    public void export() {
-        StringWriter stringWriter = new StringWriter();
-        XMLOutputter xmlOutputter = new XMLOutputter(Format.getPrettyFormat());
-        try {
-            xmlOutputter.output(buildFileContent, stringWriter);
-            if (outputFile.exists()) {
-                if (outputFile.delete()) {
-                    System.out.println(outputFile.getAbsoluteFile().getName() + " deleted");
-                } else {
-                    System.out.println(outputFile.getAbsoluteFile().getName() + " not deleted");
-                }
-            }
-            FileUtils.writeStringToFile(outputFile, stringWriter.toString(), true);
-        } catch (IOException exception) {
-            exception.printStackTrace();
-            throw new RuntimeException("Cannot export project");
         }
     }
 }

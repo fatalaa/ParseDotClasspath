@@ -51,14 +51,19 @@
             <version>2.4</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.1</version>
+            <groupId>org.javatuples</groupId>
+            <artifactId>javatuples</artifactId>
+            <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>jaxen</groupId>
+            <artifactId>jaxen</artifactId>
+            <version>1.1.4</version>
         </dependency>
     </dependencies>
 
     <pluginRepositories>
-        <pluginRepository>
+    <pluginRepository>
             <id>central</id>
             <name>Maven Plugin Repository</name>
             <url>http://repo1.maven.org/maven2</url>

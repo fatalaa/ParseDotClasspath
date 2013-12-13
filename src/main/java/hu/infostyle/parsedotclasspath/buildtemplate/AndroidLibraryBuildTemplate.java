@@ -4,25 +4,30 @@ import hu.infostyle.parsedotclasspath.antutil.AntExportable;
 import hu.infostyle.parsedotclasspath.antutil.AntPropertyType;
 import hu.infostyle.parsedotclasspath.eclipseutil.EnvironmentVariables;
 import org.apache.commons.io.FileUtils;
+import org.javatuples.Triplet;
 import org.jdom2.Comment;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
+import org.jdom2.filter.Filters;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
+import org.jdom2.xpath.XPathExpression;
+import org.jdom2.xpath.XPathFactory;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.Properties;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExportable {
     protected String androidHome;
+    protected List<Triplet<String, String, String>> refProjects;
 
-    public AndroidLibraryBuildTemplate(String workspaceRootDir, EnvironmentVariables environmentVariables, String outputFileWithPath) {
+    public AndroidLibraryBuildTemplate(String workspaceRootDir, EnvironmentVariables environmentVariables, String outputFileWithPath, List<Triplet<String, String, String>> refProjects) {
         super(workspaceRootDir, outputFileWithPath);
+        this.refProjects = refProjects;
         if (environmentVariables != null) {
             androidHome = environmentVariables.getVariableByKey("ANDROID_HOME");
             return;
@@ -169,7 +174,7 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
     }
 
     public void addSpecificationToProject() {
-        if (!outputFile.exists() && !outputFile.delete())
+        if (outputFile.exists() && !outputFile.delete())
             throw new RuntimeException("Can not delete existing buildfile");
         try {
             createBuildFileWithProjectElement();
@@ -194,5 +199,34 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
         Element javaCompilerProperty = new Element("property").setAttribute("name", "java.compiler.classpath")
                 .setAttribute("value", "${" + getProjectName() + ".classpath}");
         rootElement.getChildren().add(idx + 1, javaCompilerProperty);
+        if (refProjects.size() > 0) {
+            List<Element> deletes = new ArrayList<Element>();
+            XPathExpression<Element> expression = XPathFactory.instance().compile("//import", Filters.element());
+            for(Element element : expression.evaluate(buildFileContent)) {
+                if (element.getAttributes().size() > 1 )
+                    idx = buildFileContent.getRootElement().indexOf(element);
+            }
+            Element preBuildTarget = new Element("target").setAttribute("name", "-pre-build");
+            for(Triplet<String, String, String> refProject : refProjects) {
+                Element buildRefProjectElement = new Element("ant").setAttribute("antfile", "build.xml")
+                        .setAttribute("dir", refProject.getValue1()).setAttribute("inheritAll", "false").setAttribute("target", "clean");
+                Element cleanRefProjectElement = new Element("ant").setAttribute("antfile", "build.xml")
+                        .setAttribute("dir", refProject.getValue1()).setAttribute("inheritAll", "false").setAttribute("target", "jar");
+                String jarname = refProject.getValue1().substring(refProject.getValue1().lastIndexOf('/') + 1) + ".jar";
+                Element copyRefProjectJarElement = new Element("copy").setAttribute("todir", "libs").setAttribute("file", refProject.getValue1() + "/" + jarname);
+                Element deleteElement = new Element("delete").setAttribute("file", refProject.getValue1() + "/" + jarname);
+                Element deleteFromLibsElement = new Element("delete").setAttribute("file", "libs/" + jarname);
+                deletes.add(deleteFromLibsElement);
+                deletes.add(deleteElement);
+                preBuildTarget.addContent(buildRefProjectElement);
+                preBuildTarget.addContent(cleanRefProjectElement);
+                preBuildTarget.addContent(copyRefProjectJarElement);
+            }
+            buildFileContent.getRootElement().addContent(idx - 1, preBuildTarget);
+
+            Element preCleanElement = new Element("target").setAttribute("name", "-pre-clean");
+            preCleanElement.addContent(deletes);
+            buildFileContent.getRootElement().addContent(idx - 1, preCleanElement);
+        }
     }
 }

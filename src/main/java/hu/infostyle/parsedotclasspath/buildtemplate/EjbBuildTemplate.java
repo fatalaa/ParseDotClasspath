@@ -133,4 +133,11 @@ public class EjbBuildTemplate extends BaseTemplate implements AntExportable {
         target.addContent(javac);
         this.appendContentToBuildFile(buildFileContent, target);
     }
+
+    public void addJarTarget(String classesDir, String jarFileName) {
+        Element target = new Element(AntUtils.BUILD_TARGET_ELEMENT).setAttribute("depends", "build-project").setAttribute("name", "jar");
+        Element jar = new Element("jar").setAttribute("basedir", classesDir).setAttribute("destFile", jarFileName);
+        target.addContent(jar);
+        this.appendContentToBuildFile(buildFileContent, target);
+    }
 }

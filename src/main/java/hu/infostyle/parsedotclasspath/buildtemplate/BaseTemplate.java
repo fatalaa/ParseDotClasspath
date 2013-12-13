@@ -3,7 +3,7 @@ package hu.infostyle.parsedotclasspath.buildtemplate;
 import hu.infostyle.parsedotclasspath.antutil.AntPropertyType;
 import hu.infostyle.parsedotclasspath.antutil.AntUtils;
 import hu.infostyle.parsedotclasspath.antutil.PropertyFileOperator;
-import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.javatuples.Triplet;
 import org.jdom2.Content;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -46,20 +46,20 @@ public abstract class BaseTemplate implements PropertyFileOperator {
         }
     }
 
-    public void addBuildAllTarget(List<ImmutablePair<String, String>> refprojects) {
+    public void addBuildAllTarget(List<Triplet<String, String, String>> refprojects) {
         if (!buildFileContent.hasRootElement())
             throw new RuntimeException("Build file has no root element");
         Element buildDependencyProjectsElement = new Element(AntUtils.BUILD_TARGET_ELEMENT);
         buildDependencyProjectsElement.setAttribute("name", "build-all");
-        for(ImmutablePair<String, String> refProject : refprojects) {
+        for(Triplet<String, String, String> refProject : refprojects) {
             Element buildDependencyProjectElement = new Element("ant");
             buildDependencyProjectElement.setAttribute("antfile", "build.xml");
-            buildDependencyProjectElement.setAttribute("dir", refProject.getRight());
+            buildDependencyProjectElement.setAttribute("dir", refProject.getValue1());
             buildDependencyProjectElement.setAttribute("inheritAll", "false");
             buildDependencyProjectElement.setAttribute("target", "clean");
             Element cleanDependencyProjectElement = new Element("ant");
             cleanDependencyProjectElement.setAttribute("antfile", "build.xml");
-            cleanDependencyProjectElement.setAttribute("dir", refProject.getRight());
+            cleanDependencyProjectElement.setAttribute("dir", refProject.getValue1());
             cleanDependencyProjectElement.setAttribute("inheritAll", "false");
             cleanDependencyProjectElement.setAttribute("target", "build-project");
             buildDependencyProjectsElement.addContent(buildDependencyProjectElement);
