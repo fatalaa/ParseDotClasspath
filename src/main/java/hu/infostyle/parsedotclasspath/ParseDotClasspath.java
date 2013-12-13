@@ -94,8 +94,8 @@ public class ParseDotClasspath {
                                                                    currentProject + File.separator + "build.xml", refProjects);
                         template.addSpecificationToProject();
                         template.export();
+                        refProjects.clear();
                     }
-                    refProjects.clear();
                     break;
                 }
                 default:

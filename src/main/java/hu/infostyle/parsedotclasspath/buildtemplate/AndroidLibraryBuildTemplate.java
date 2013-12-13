@@ -199,7 +199,7 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
         Element javaCompilerProperty = new Element("property").setAttribute("name", "java.compiler.classpath")
                 .setAttribute("value", "${" + getProjectName() + ".classpath}");
         rootElement.getChildren().add(idx + 1, javaCompilerProperty);
-        if (refProjects.size() > 0) {
+        /*if (refProjects.size() > 0) {
             List<Element> deletes = new ArrayList<Element>();
             XPathExpression<Element> expression = XPathFactory.instance().compile("//import", Filters.element());
             for(Element element : expression.evaluate(buildFileContent)) {
@@ -227,6 +227,6 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
             Element preCleanElement = new Element("target").setAttribute("name", "-pre-clean");
             preCleanElement.addContent(deletes);
             buildFileContent.getRootElement().addContent(idx - 1, preCleanElement);
-        }
+        }*/
     }
 }
