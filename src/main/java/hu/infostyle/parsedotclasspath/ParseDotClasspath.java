@@ -257,6 +257,7 @@ public class ParseDotClasspath {
                 } else if (cpEntryKind.equals("src")) {
                     if (path.startsWith("/")) {
                         String dependencyClasspathName = path.substring(1);
+                        classpathBuilder.add(makeAntVariableFromString(dependencyClasspathName));
                         refProjects.add(new ImmutablePair<String, String>(dependencyClasspathName, projectDirectory.getAbsolutePath()));
                     } else {
                         templateSettings.put("src", path);
