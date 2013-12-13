@@ -8,19 +8,20 @@ import java.util.Properties;
 
 public class PropertyUtil {
     public static String getValueForKey(File propertyFile, String key) {
-        if (!propertyFile.exists())
-            return null;
-        Properties properties = new Properties();
-        try {
-            properties.load(new FileInputStream(propertyFile));
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
+        if (propertyFile.exists()) {
+            Properties properties = new Properties();
+            try {
+                properties.load(new FileInputStream(propertyFile));
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+            if (properties.size() <= 0)
+                return null;
+            String value = properties.getProperty(key);
+            return value != null ? value : null;
         }
-        if (properties.size() <= 0)
-            return null;
-        String value = properties.getProperty(key);
-        return value != null ? value : null;
+        return null;
     }
 
     public static String getValueForKey(String propertyFilePath, String key) {
@@ -28,25 +29,22 @@ public class PropertyUtil {
     }
 
     public static String getValueForKeyContainingString(File propertyFile, String containingKey) {
-        if (!propertyFile.exists())
-            return null;
-        Properties properties = new Properties();
-        try {
-            properties.load(new FileInputStream(propertyFile));
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-        if (properties.size() <= 0)
-            return null;
-        Enumeration propertyKeySet = properties.keys();
-        String key = (String)propertyKeySet.nextElement();
-        while (key != null) {
-            if (!key.contains(containingKey)) {
-                key = (String)propertyKeySet.nextElement();
-                continue;
+        if (propertyFile.exists()) {
+            Properties properties = new Properties();
+            try {
+                properties.load(new FileInputStream(propertyFile));
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
             }
-            return properties.getProperty(key);
+            if (properties.size() <= 0)
+                return null;
+            Enumeration propertyKeySet = properties.keys();
+            String key = (String)propertyKeySet.nextElement();
+            while (key != null) {
+                if (key.contains(containingKey))
+                    return properties.getProperty(key);
+            }
         }
         return null;
     }

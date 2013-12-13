@@ -72,7 +72,7 @@ public class AndroidLibraryBuildTemplate extends BaseTemplate implements AntExpo
 
         appendContentToBuildFile(buildFileContent, new Element("property").setAttribute("environment", "env"));
 
-        Element condition = new Element("condidtion").setAttribute("property", "sdk.dir").setAttribute("value", "${env.ANDROID_HOME}");
+        Element condition = new Element("condition").setAttribute("property", "sdk.dir").setAttribute("value", "${env.ANDROID_HOME}");
         Element isset = new Element("isset").setAttribute("property", "env.ANDROID_HOME");
         condition.addContent(isset);
         appendContentToBuildFile(buildFileContent, condition);
